@@ -90,7 +90,7 @@ const AccordionItem = ({ category, isOpen, onToggle }) => {
         <div className="border-b border-white/10 overflow-hidden">
             <motion.button
                 onClick={onToggle}
-                className="relative w-full flex items-center justify-between p-6 lg:p-8 text-left transition-colors group"
+                className="relative w-full flex items-center justify-between p-4 sm:p-5 md:p-6 lg:p-8 text-left transition-colors group"
                 whileTap={{ scale: 0.99 }}
             >
                 {/* Background Image */}
@@ -102,16 +102,16 @@ const AccordionItem = ({ category, isOpen, onToggle }) => {
                 <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/80 to-black/70 group-hover:from-black/80 group-hover:via-black/70 group-hover:to-black/60 transition-colors" />
 
                 {/* Content */}
-                <div className="relative z-10 flex items-center gap-4 lg:gap-6">
-                    <span className="text-3xl lg:text-4xl drop-shadow-lg">{category.icon}</span>
-                    <span className="text-xl lg:text-2xl font-black text-white tracking-wide drop-shadow-lg">{category.title}</span>
+                <div className="relative z-10 flex items-center gap-3 sm:gap-4 lg:gap-6">
+                    <span className="text-2xl sm:text-3xl lg:text-4xl drop-shadow-lg">{category.icon}</span>
+                    <span className="text-lg sm:text-xl lg:text-2xl font-black text-white tracking-wide drop-shadow-lg">{category.title}</span>
                 </div>
                 <motion.div
                     animate={{ rotate: isOpen ? 180 : 0 }}
                     transition={{ duration: 0.3 }}
-                    className="relative z-10 text-[#d4af37] drop-shadow-lg"
+                    className="relative z-10 text-[#d4af37] drop-shadow-lg flex-shrink-0"
                 >
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="24" height="24" className="sm:w-6 sm:h-6 lg:w-7 lg:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                 </motion.div>
@@ -126,28 +126,28 @@ const AccordionItem = ({ category, isOpen, onToggle }) => {
                         transition={{ duration: 0.4, ease: 'easeInOut' }}
                         className="overflow-hidden bg-zinc-900/50"
                     >
-                        <div className="p-4 lg:p-6 space-y-4">
+                        <div className="p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4">
                             {category.items.map((item, index) => (
                                 <motion.div
                                     key={index}
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
                                     transition={{ delay: index * 0.05 }}
-                                    className="flex justify-between items-start p-4 lg:p-5 bg-zinc-800/50 rounded-2xl hover:bg-zinc-700/50 transition-colors group"
+                                    className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0 p-3 sm:p-4 lg:p-5 bg-zinc-800/50 rounded-xl sm:rounded-2xl hover:bg-zinc-700/50 transition-colors group"
                                 >
-                                    <div className="flex-1 pr-4">
-                                        <h4 className="text-lg lg:text-xl font-bold text-white group-hover:text-[#d4af37] transition-colors">
+                                    <div className="flex-1 sm:pr-4">
+                                        <h4 className="text-base sm:text-lg lg:text-xl font-bold text-white group-hover:text-[#d4af37] transition-colors">
                                             {item.name}
                                         </h4>
-                                        <p className="text-sm text-zinc-400 mt-1 leading-relaxed">
+                                        <p className="text-xs sm:text-sm text-zinc-400 mt-1 leading-relaxed">
                                             {item.description}
                                         </p>
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-xl lg:text-2xl font-black text-[#d4af37]">
+                                    <div className="text-left sm:text-right flex-shrink-0">
+                                        <span className="text-lg sm:text-xl lg:text-2xl font-black text-[#d4af37]">
                                             {item.price}
                                         </span>
-                                        <span className="text-sm text-[#d4af37]/70 ml-1">₺</span>
+                                        <span className="text-xs sm:text-sm text-[#d4af37]/70 ml-1">₺</span>
                                     </div>
                                 </motion.div>
                             ))}
@@ -171,36 +171,36 @@ export default function MenuPage() {
     };
 
     return (
-        <section id="menu" className="min-h-screen bg-black py-16 lg:py-24">
-            <div className="max-w-[1200px] mx-auto px-4 lg:px-8">
+        <section id="menu" className="min-h-screen bg-black py-12 sm:py-16 lg:py-24">
+            <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <motion.div
-                    className="text-center mb-12 lg:mb-16"
+                    className="text-center mb-8 sm:mb-12 lg:mb-16"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8 }}
                 >
                     <motion.div
-                        className="inline-flex items-center gap-3 mb-6"
+                        className="inline-flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6"
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
                     >
-                        <span className="w-12 h-[2px] bg-[#d4af37]"></span>
-                        <span className="text-[#d4af37] text-sm font-black tracking-[0.5em] uppercase">Lezzetler</span>
-                        <span className="w-12 h-[2px] bg-[#d4af37]"></span>
+                        <span className="w-8 sm:w-10 lg:w-12 h-[2px] bg-[#d4af37]"></span>
+                        <span className="text-[#d4af37] text-xs sm:text-sm font-black tracking-[0.3em] sm:tracking-[0.4em] lg:tracking-[0.5em] uppercase">Lezzetler</span>
+                        <span className="w-8 sm:w-10 lg:w-12 h-[2px] bg-[#d4af37]"></span>
                     </motion.div>
-                    <h2 className="text-5xl lg:text-7xl font-black text-white tracking-tighter">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white tracking-tighter px-2">
                         MENÜMÜZ
                     </h2>
-                    <p className="text-zinc-400 mt-4 text-lg max-w-[600px] mx-auto">
+                    <p className="text-zinc-400 mt-3 sm:mt-4 text-sm sm:text-base lg:text-lg max-w-[600px] mx-auto px-2">
                         Konya mutfağının en seçkin lezzetleri, geleneksel tariflerle modern sunumda
                     </p>
                 </motion.div>
 
                 {/* Accordion Menu */}
                 <motion.div
-                    className="bg-zinc-900/40 backdrop-blur-xl rounded-[2rem] lg:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl"
+                    className="bg-zinc-900/40 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl"
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
@@ -217,7 +217,7 @@ export default function MenuPage() {
 
                 {/* Footer Note */}
                 <motion.p
-                    className="text-center text-zinc-500 text-sm mt-8"
+                    className="text-center text-zinc-500 text-xs sm:text-sm mt-6 sm:mt-8 px-2"
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}

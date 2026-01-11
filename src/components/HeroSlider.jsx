@@ -50,12 +50,12 @@ export default function HeroSlider() {
     };
 
     return (
-        <section id="hero" className="w-full min-h-screen bg-black flex items-center justify-center py-6 lg:py-12">
-            <div className="max-w-[1600px] w-full mx-auto px-4 lg:px-10">
-                <div className="grid grid-cols-1 lg:grid-cols-[75%_25%] gap-8 lg:gap-12 items-center">
+        <section id="hero" className="w-full min-h-screen bg-black flex items-center justify-center py-4 sm:py-6 lg:py-12">
+            <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-10">
+                <div className="grid grid-cols-1 lg:grid-cols-[75%_25%] gap-6 sm:gap-8 lg:gap-12 items-center">
 
                     {/* Slider Card */}
-                    <div className="relative w-full h-[65vh] lg:h-[80vh] rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(212,175,55,0.2)] border border-[#d4af37]/20 bg-zinc-900">
+                    <div className="relative w-full h-[50vh] sm:h-[60vh] md:h-[65vh] lg:h-[80vh] rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(212,175,55,0.2)] border border-[#d4af37]/20 bg-zinc-900">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={currentSlide}
@@ -70,7 +70,7 @@ export default function HeroSlider() {
                             />
                         </AnimatePresence>
 
-                        <div className="relative h-full z-10 p-10 lg:p-20 flex flex-col justify-center text-white">
+                        <div className="relative h-full z-10 p-6 sm:p-8 md:p-10 lg:p-20 flex flex-col justify-center text-white">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={currentSlide}
@@ -79,14 +79,17 @@ export default function HeroSlider() {
                                     exit={{ opacity: 0, y: -30 }}
                                     transition={{ duration: 0.5, delay: 0.2 }}
                                 >
-                                    <h1 className="text-5xl lg:text-8xl font-black leading-none mb-3 tracking-tighter drop-shadow-2xl">
+                                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-8xl font-black leading-none mb-2 sm:mb-3 tracking-tighter drop-shadow-2xl">
                                         {slides[currentSlide].title}
                                     </h1>
-                                    <h2 className="text-4xl lg:text-6xl font-light italic leading-none text-[#d4af37] drop-shadow-xl font-['Brush_Script_MT']">
+                                    <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-light italic leading-none text-[#d4af37] drop-shadow-xl font-['Brush_Script_MT']">
                                         {slides[currentSlide].subtitle}
                                     </h2>
                                     <motion.button
-                                        className="mt-10 px-10 py-4 bg-[#d4af37] text-black font-bold text-sm tracking-[0.2em] rounded-full hover:bg-white hover:text-black transition-all duration-300 shadow-xl"
+                                        onClick={() => {
+                                            window.open('/menu', '_blank');
+                                        }}
+                                        className="mt-6 sm:mt-8 lg:mt-10 px-6 sm:px-8 lg:px-10 py-3 sm:py-3.5 lg:py-4 bg-[#d4af37] text-black font-bold text-xs sm:text-sm tracking-[0.2em] rounded-full hover:bg-white hover:text-black transition-all duration-300 shadow-xl"
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                     >
@@ -95,21 +98,23 @@ export default function HeroSlider() {
                                 </motion.div>
                             </AnimatePresence>
 
-                            {/* Slider Navigation Internal */}
-                            <div className="absolute bottom-12 right-12 translate-x-0 flex gap-5 z-20 hidden lg:flex">
+                            {/* Slider Navigation Internal - Mobile & Desktop */}
+                            <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 lg:bottom-12 lg:right-12 translate-x-0 flex gap-3 sm:gap-4 lg:gap-5 z-20">
                                 <button
                                     onClick={prevSlide}
-                                    className="w-16 h-16 flex items-center justify-center bg-black/40 backdrop-blur-2xl border border-[#d4af37]/30 text-[#d4af37] rounded-full hover:bg-[#d4af37] hover:text-black transition-all duration-500 group"
+                                    className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-black/40 backdrop-blur-2xl border border-[#d4af37]/30 text-[#d4af37] rounded-full hover:bg-[#d4af37] hover:text-black transition-all duration-500 group"
+                                    aria-label="Önceki slide"
                                 >
-                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:scale-110 transition-transform">
+                                    <svg width="20" height="20" className="sm:w-6 sm:h-6 lg:w-7 lg:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:scale-110 transition-transform">
                                         <polyline points="15 18 9 12 15 6"></polyline>
                                     </svg>
                                 </button>
                                 <button
                                     onClick={nextSlide}
-                                    className="w-16 h-16 flex items-center justify-center bg-black/40 backdrop-blur-2xl border border-[#d4af37]/30 text-[#d4af37] rounded-full hover:bg-[#d4af37] hover:text-black transition-all duration-500 group"
+                                    className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-black/40 backdrop-blur-2xl border border-[#d4af37]/30 text-[#d4af37] rounded-full hover:bg-[#d4af37] hover:text-black transition-all duration-500 group"
+                                    aria-label="Sonraki slide"
                                 >
-                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:scale-110 transition-transform">
+                                    <svg width="20" height="20" className="sm:w-6 sm:h-6 lg:w-7 lg:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="group-hover:scale-110 transition-transform">
                                         <polyline points="9 18 15 12 9 6"></polyline>
                                     </svg>
                                 </button>
