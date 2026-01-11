@@ -1,5 +1,11 @@
 import './globals.css';
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata = {
   title: 'The Hunger | Premium Restaurant Experience',
   description: 'The Hunger - 2012\'den bu yana lezzet tutkunlarına hizmet veren premium restoran zinciri. Sürdürülebilir, kaliteli ve lezzetli yemekler.',
@@ -9,12 +15,6 @@ export const metadata = {
     description: 'The Hunger - Premium restoran deneyimi için doğru adres.',
     type: 'website',
   },
-};
-
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
 };
 
 export default function RootLayout({ children }) {
