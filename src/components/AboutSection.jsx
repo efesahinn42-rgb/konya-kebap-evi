@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AboutSection() {
@@ -60,6 +61,20 @@ export default function AboutSection() {
                     />
 
                     <div className="mb-6 sm:mb-8 lg:mb-10">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.8 }}
+                            className="mb-8 flex justify-center"
+                        >
+                            <Image
+                                src="/logo.png"
+                                alt="Konya Kebap Evi Logo"
+                                width={300}
+                                height={300}
+                                className="w-32 sm:w-48 lg:w-64 h-auto object-contain drop-shadow-2xl brightness-110"
+                            />
+                        </motion.div>
                         <motion.h3
                             className="text-[#d2a574] text-xs sm:text-sm lg:text-base font-bold tracking-[0.3em] sm:tracking-[0.4em] uppercase mb-4 sm:mb-6"
                             initial={{ opacity: 0 }}

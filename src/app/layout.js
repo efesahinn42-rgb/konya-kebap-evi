@@ -7,13 +7,16 @@ export const viewport = {
 };
 
 export const metadata = {
-  title: 'The Hunger | Premium Restaurant Experience',
-  description: 'The Hunger - 2012\'den bu yana lezzet tutkunlarına hizmet veren premium restoran zinciri. Sürdürülebilir, kaliteli ve lezzetli yemekler.',
-  keywords: 'restoran, yemek, the hunger, istanbul, kebap, fine dining',
+  title: 'Konya Kebap Evi | Lezzet Mirası',
+  description: 'Konya Kebap Evi - Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
+  keywords: 'konya kebap evi, etliekmek, kebap, konya mutfağı, restoran, yemek',
   openGraph: {
-    title: 'The Hunger | Premium Restaurant Experience',
-    description: 'The Hunger - Premium restoran deneyimi için doğru adres.',
+    title: 'Konya Kebap Evi | Lezzet Mirası',
+    description: 'Konya Kebap Evi - Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
     type: 'website',
+  },
+  icons: {
+    icon: '/logo.png',
   },
 };
 
@@ -21,7 +24,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="tr">
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/logo.png" />
       </head>
       <body suppressHydrationWarning>
         {children}
