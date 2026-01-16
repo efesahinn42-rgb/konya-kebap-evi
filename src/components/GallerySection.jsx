@@ -7,32 +7,32 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 const galleryItems = [
     {
         key: 'kebap',
-        src: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?q=80&w=400',
+        src: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?q=80&w=400',
         alt: 'Adana Kebap'
     },
     {
         key: 'pide',
-        src: 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?q=80&w=400',
+        src: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=400',
         alt: 'Lahmacun'
     },
     {
         key: 'tatli',
-        src: 'https://images.unsplash.com/photo-1576097449798-7c7f90e1248a?q=80&w=400',
+        src: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=400',
         alt: 'Baklava'
     },
     {
         key: 'kebap',
-        src: 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?q=80&w=400',
+        src: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=400',
         alt: 'Şiş Kebap'
     },
     {
         key: 'pide',
-        src: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=400',
+        src: 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?q=80&w=400',
         alt: 'Pide'
     },
     {
         key: 'tatli',
-        src: 'https://images.unsplash.com/photo-1571115177098-24ec42ed5040?q=80&w=400',
+        src: 'https://images.unsplash.com/photo-1508737027454-e6454ef45afd?q=80&w=400',
         alt: 'Künefe'
     },
     {
@@ -42,12 +42,12 @@ const galleryItems = [
     },
     {
         key: 'pide',
-        src: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=400',
+        src: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=400',
         alt: 'Kaşarlı Pide'
     },
     {
         key: 'tatli',
-        src: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?q=80&w=400',
+        src: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=400',
         alt: 'Sütlaç'
     },
 ];

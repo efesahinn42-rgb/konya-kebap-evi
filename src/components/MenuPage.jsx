@@ -44,7 +44,7 @@ const menuData = [
         icon: '🍰',
         items: [
             { name: 'Fıstıklı Katmer', price: '380.00', description: 'Gaziantep katmer geleneğinden; bol fıstıklı, kaymaklı ve çıtır tereyağıyla hazırlanır.', image: 'https://images.unsplash.com/photo-1576097449798-7c7f90e1248a?auto=format&fit=crop&q=80&w=600' },
-            { name: 'Künefe', price: '400.00', description: 'Antakya kökenli, altın kızarmış kadayıf ve erimiş peynirle hazırlanır.', image: 'https://images.unsplash.com/photo-1571115177098-24ec42ed5040?auto=format&fit=crop&q=80&w=600' },
+            { name: 'Künefe', price: '400.00', description: 'Antakya kökenli, altın kızarmış kadayıf ve erimiş peynirle hazırlanır.', image: 'https://images.unsplash.com/photo-1508737027454-e6454ef45afd?auto=format&fit=crop&q=80&w=600' },
             { name: 'Kabak Tatlısı', price: '330.00', description: 'Fırında kızartılan kabak, tahin ve taze cevizlerle zenginleştirilir.', image: 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=600' },
             { name: 'Sakızlı Dondurma', price: '200.00', description: 'Osmanlı\'dan beri yazların vazgeçilmezi, yoğun kıvamlı sakızlı dondurma.', image: 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?auto=format&fit=crop&q=80&w=600' },
         ]
