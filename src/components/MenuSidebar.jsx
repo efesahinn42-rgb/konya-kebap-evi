@@ -1,17 +1,19 @@
 'use client';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { Instagram, Facebook, X } from 'lucide-react';
 
 const menuItems = [
     { label: 'ANA SAYFA', href: '/', isPage: true },
     { label: 'HAKKIMIZDA', href: '/#about', isPage: false },
-    { label: 'MENÜMÜZ', href: '/#menu', isPage: false },
+    { label: 'MENÜMÜZ', href: '/menu', isModal: true },
     { label: 'REZERVASYON', href: '/#reservation', isPage: false },
     { label: 'GALERİ', href: '/#gallery', isPage: false },
     { label: 'ÖDÜLLERİMİZ', href: '/#awards', isPage: false },
     { label: 'BASINDA BİZ', href: '/#press', isPage: false },
+    { label: 'SOSYAL SORUMLULUK', href: '/#sosyal-sorumluluk', isPage: false },
+    { label: 'İNSAN KAYNAKLARI', href: '/#insan-kaynaklari', isPage: false },
     { label: 'İLETİŞİM', href: '/#contact', isPage: false },
 ];
 
@@ -36,25 +38,6 @@ export default function MenuSidebar() {
 
     return (
         <div className="flex flex-col w-full py-6 sm:py-8 lg:py-0 bg-black">
-            <Link href="/" className="mb-8 sm:mb-10 lg:mb-12 group block">
-                {/* Logo */}
-                <div className="mb-4 sm:mb-6">
-                    <Image
-                        src="/logo.png"
-                        alt="Konya Kebap Evi"
-                        width={300}
-                        height={300}
-                        className="w-48 sm:w-64 lg:w-80 h-auto object-contain drop-shadow-2xl brightness-110 group-hover:scale-105 transition-transform duration-300"
-                        priority
-                    />
-                </div>
-
-                <div className="flex flex-col items-start leading-none gap-1">
-                    <span className="text-base sm:text-lg lg:text-xl font-light text-zinc-500 tracking-[0.15em] sm:tracking-[0.2em] uppercase">Konya</span>
-                    <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#d4af37] tracking-tighter">Kebap Evi</span>
-                </div>
-                <div className="w-12 sm:w-14 lg:w-16 h-1 sm:h-1.5 bg-[#d4af37] mt-3 sm:mt-4 lg:mt-5 rounded-full shadow-[0_0_15px_rgba(212,175,55,0.5)]"></div>
-            </Link>
 
             <nav className="flex flex-col gap-3 sm:gap-4">
                 {menuItems.map((item) => {
@@ -78,6 +61,22 @@ export default function MenuSidebar() {
                                 </motion.span>
                             </Link>
                         );
+                    } else if (item.isModal) {
+                        return (
+                            <motion.span
+                                key={item.label}
+                                onClick={() => {
+                                    if (typeof window !== 'undefined' && window.openMenuModal) {
+                                        window.openMenuModal();
+                                    }
+                                }}
+                                className="block text-xs sm:text-sm lg:text-base font-bold tracking-[0.2em] sm:tracking-[0.25em] text-left py-2 sm:py-2.5 lg:py-3 transition-colors text-zinc-400 hover:text-[#d4af37] cursor-pointer"
+                                whileHover={{ x: 10 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {item.label}
+                            </motion.span>
+                        );
                     } else {
                         return (
                             <motion.span
@@ -97,11 +96,15 @@ export default function MenuSidebar() {
             <div className="mt-10 sm:mt-12 lg:mt-16 pt-6 sm:pt-8 lg:pt-10 border-t border-zinc-800">
                 <p className="text-[10px] sm:text-[11px] text-zinc-500 tracking-[0.3em] sm:tracking-[0.4em] font-black mb-4 sm:mb-6 uppercase">Sosyal Medya</p>
                 <div className="flex gap-3 sm:gap-4 lg:gap-5">
-                    {['IG', 'FB', 'TW'].map(social => (
-                        <div key={social} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 flex items-center justify-center text-[10px] sm:text-xs font-bold text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition-all cursor-pointer border border-[#d4af37]/20 shadow-sm">
-                            {social}
-                        </div>
-                    ))}
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 flex items-center justify-center text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition-all cursor-pointer border border-[#d4af37]/20 shadow-sm">
+                        <Instagram className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </a>
+                    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 flex items-center justify-center text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition-all cursor-pointer border border-[#d4af37]/20 shadow-sm">
+                        <Facebook className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </a>
+                    <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-zinc-900 flex items-center justify-center text-[#d4af37] hover:bg-[#d4af37] hover:text-black transition-all cursor-pointer border border-[#d4af37]/20 shadow-sm">
+                        <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </a>
                 </div>
             </div>
         </div>

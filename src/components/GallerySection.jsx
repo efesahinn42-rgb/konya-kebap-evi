@@ -1,59 +1,116 @@
 'use client';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { FlipReveal, FlipRevealItem } from '@/components/ui/flip-reveal';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const galleryItems = [
+    // Misafirlerimiz - Guests enjoying the restaurant
     {
-        key: 'kebap',
-        src: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?q=80&w=400',
+        category: 'misafir',
+        src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=800',
+        alt: 'Misafirlerimiz - 1'
+    },
+    {
+        category: 'misafir',
+        src: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800',
+        alt: 'Misafirlerimiz - 2'
+    },
+    {
+        category: 'misafir',
+        src: 'https://images.unsplash.com/photo-1559329007-40df8a9345d8?q=80&w=800',
+        alt: 'Misafirlerimiz - 3'
+    },
+    {
+        category: 'misafir',
+        src: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?q=80&w=800',
+        alt: 'Misafirlerimiz - 4'
+    },
+    {
+        category: 'misafir',
+        src: 'https://images.unsplash.com/photo-1529543544277-750e9820f8f5?q=80&w=800',
+        alt: 'Misafirlerimiz - 5'
+    },
+    {
+        category: 'misafir',
+        src: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=800',
+        alt: 'Misafirlerimiz - 6'
+    },
+    // İmza Lezzetlerimiz - Signature dishes
+    {
+        category: 'imza',
+        src: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800',
+        alt: 'Kuzu Tandır'
+    },
+    {
+        category: 'imza',
+        src: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=800',
         alt: 'Adana Kebap'
     },
     {
-        key: 'pide',
-        src: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=400',
-        alt: 'Lahmacun'
-    },
-    {
-        key: 'tatli',
-        src: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=400',
-        alt: 'Baklava'
-    },
-    {
-        key: 'kebap',
-        src: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=400',
-        alt: 'Şiş Kebap'
-    },
-    {
-        key: 'pide',
-        src: 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?q=80&w=400',
-        alt: 'Pide'
-    },
-    {
-        key: 'tatli',
-        src: 'https://images.unsplash.com/photo-1508737027454-e6454ef45afd?q=80&w=400',
-        alt: 'Künefe'
-    },
-    {
-        key: 'kebap',
-        src: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=400',
+        category: 'imza',
+        src: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?q=80&w=800',
         alt: 'Etliekmek'
     },
     {
-        key: 'pide',
-        src: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=400',
-        alt: 'Kaşarlı Pide'
+        category: 'imza',
+        src: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=800',
+        alt: 'Pide'
     },
     {
-        key: 'tatli',
-        src: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?q=80&w=400',
-        alt: 'Sütlaç'
+        category: 'imza',
+        src: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=800',
+        alt: 'Baklava'
+    },
+    {
+        category: 'imza',
+        src: 'https://images.unsplash.com/photo-1508737027454-e6454ef45afd?q=80&w=800',
+        alt: 'Künefe'
     },
 ];
 
 export default function GallerySection() {
-    const [filterKey, setFilterKey] = useState('all');
+    const [activeCategory, setActiveCategory] = useState('misafir');
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [currentCategoryImages, setCurrentCategoryImages] = useState([]);
+
+    // Filter images by category
+    const filteredItems = galleryItems.filter(item => item.category === activeCategory);
+
+    // Open lightbox
+    const openLightbox = (index, category) => {
+        const categoryImages = galleryItems.filter(item => item.category === category);
+        setCurrentCategoryImages(categoryImages);
+        const actualIndex = categoryImages.findIndex(img => img.src === filteredItems[index].src);
+        setCurrentImageIndex(actualIndex);
+        setLightboxOpen(true);
+    };
+
+    // Navigate within category
+    const nextImage = () => {
+        setCurrentImageIndex((prev) => (prev + 1) % currentCategoryImages.length);
+    };
+
+    const prevImage = () => {
+        setCurrentImageIndex((prev) => (prev - 1 + currentCategoryImages.length) % currentCategoryImages.length);
+    };
+
+    // Close on escape
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') setLightboxOpen(false);
+            if (e.key === 'ArrowRight') nextImage();
+            if (e.key === 'ArrowLeft') prevImage();
+        };
+        if (lightboxOpen) {
+            document.addEventListener('keydown', handleEscape);
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.removeEventListener('keydown', handleEscape);
+            document.body.style.overflow = 'unset';
+        };
+    }, [lightboxOpen, currentCategoryImages.length]);
 
     return (
         <section id="gallery" className="relative bg-[#0a0a0a] overflow-hidden w-full">
@@ -93,73 +150,143 @@ export default function GallerySection() {
 
                         {/* Filter Buttons */}
                         <motion.div
+                            className="flex flex-wrap justify-center gap-4 sm:gap-6"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.6 }}
                         >
-                            <ToggleGroup
-                                type="single"
-                                className="bg-zinc-800/50 rounded-full border border-white/10 p-1.5 inline-flex"
-                                value={filterKey}
-                                onValueChange={(value) => value && setFilterKey(value)}
-                            >
-                                <ToggleGroupItem
-                                    value="all"
-                                    className="px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wider text-zinc-400 data-[state=on]:bg-[#d4af37] data-[state=on]:text-black transition-all"
+                            {[
+                                { key: 'misafir', label: 'Misafirlerimiz' },
+                                { key: 'imza', label: 'İmza Lezzetlerimiz' },
+                            ].map((cat) => (
+                                <motion.button
+                                    key={cat.key}
+                                    onClick={() => setActiveCategory(cat.key)}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className={`group relative px-6 sm:px-10 py-3 sm:py-4 rounded-2xl text-sm sm:text-lg font-bold tracking-wide transition-all duration-300 overflow-hidden ${activeCategory === cat.key
+                                        ? 'bg-gradient-to-r from-[#d4af37] via-[#f0d675] to-[#d4af37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]'
+                                        : 'bg-zinc-800/80 text-white hover:bg-zinc-700/90 border border-[#d4af37]/30 hover:border-[#d4af37]/60'
+                                        }`}
                                 >
-                                    Tümü
-                                </ToggleGroupItem>
-                                <ToggleGroupItem
-                                    value="kebap"
-                                    className="px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wider text-zinc-400 data-[state=on]:bg-[#d4af37] data-[state=on]:text-black transition-all"
-                                >
-                                    Kebaplar
-                                </ToggleGroupItem>
-                                <ToggleGroupItem
-                                    value="pide"
-                                    className="px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wider text-zinc-400 data-[state=on]:bg-[#d4af37] data-[state=on]:text-black transition-all"
-                                >
-                                    Pideler
-                                </ToggleGroupItem>
-                                <ToggleGroupItem
-                                    value="tatli"
-                                    className="px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold tracking-wider text-zinc-400 data-[state=on]:bg-[#d4af37] data-[state=on]:text-black transition-all"
-                                >
-                                    Tatlılar
-                                </ToggleGroupItem>
-                            </ToggleGroup>
+                                    <span className="relative z-10">
+                                        {cat.label}
+                                    </span>
+                                    {activeCategory === cat.key && (
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                            initial={{ x: '-100%' }}
+                                            animate={{ x: '100%' }}
+                                            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
+                                        />
+                                    )}
+                                </motion.button>
+                            ))}
                         </motion.div>
                     </div>
 
-                    {/* Gallery Grid with FlipReveal */}
-                    <FlipReveal
-                        className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6"
-                        keys={[filterKey]}
-                        showClass="flex"
-                        hideClass="hidden"
-                    >
-                        {galleryItems.map((item, index) => (
-                            <FlipRevealItem
-                                key={index}
-                                flipKey={item.key}
-                                className="group"
-                            >
-                                <div className="relative aspect-square overflow-hidden rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#d4af37]/30 transition-all duration-300">
-                                    <img
-                                        src={item.src}
-                                        alt={item.alt}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                        <p className="text-white text-sm sm:text-base font-bold">{item.alt}</p>
+                    {/* Gallery Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                        <AnimatePresence mode="popLayout">
+                            {filteredItems.map((item, index) => (
+                                <motion.div
+                                    key={item.src}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="group cursor-pointer"
+                                    onClick={() => openLightbox(index, activeCategory)}
+                                >
+                                    <div className="relative aspect-square overflow-hidden rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#d4af37]/30 transition-all duration-300">
+                                        <img
+                                            src={item.src}
+                                            alt={item.alt}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                            <p className="text-white text-sm sm:text-base font-bold">{item.alt}</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </FlipRevealItem>
-                        ))}
-                    </FlipReveal>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
                 </motion.div>
             </div>
+
+            {/* Lightbox Modal */}
+            <AnimatePresence>
+                {lightboxOpen && currentCategoryImages.length > 0 && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setLightboxOpen(false)}
+                        />
+
+                        {/* Modal Content */}
+                        <motion.div
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setLightboxOpen(false)}
+                                className="absolute top-4 right-4 z-10 w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-zinc-900/80 hover:bg-[#d4af37] text-white hover:text-black rounded-full transition-all"
+                            >
+                                <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                            </button>
+
+                            {/* Previous Button */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                className="absolute left-4 sm:left-8 z-10 w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center bg-zinc-900/80 hover:bg-[#d4af37] text-white hover:text-black rounded-full transition-all"
+                            >
+                                <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
+                            </button>
+
+                            {/* Next Button */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                className="absolute right-4 sm:right-8 z-10 w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center bg-zinc-900/80 hover:bg-[#d4af37] text-white hover:text-black rounded-full transition-all"
+                            >
+                                <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
+                            </button>
+
+                            {/* Image */}
+                            <motion.img
+                                key={currentCategoryImages[currentImageIndex]?.src}
+                                src={currentCategoryImages[currentImageIndex]?.src?.replace('w=800', 'w=1200')}
+                                alt={currentCategoryImages[currentImageIndex]?.alt}
+                                className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.9 }}
+                                transition={{ duration: 0.2 }}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+
+                            {/* Caption */}
+                            <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 text-center">
+                                <p className="text-white text-lg sm:text-xl font-bold mb-2">
+                                    {currentCategoryImages[currentImageIndex]?.alt}
+                                </p>
+                                <p className="text-zinc-400 text-sm">
+                                    {currentImageIndex + 1} / {currentCategoryImages.length}
+                                </p>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </section>
     );
 }

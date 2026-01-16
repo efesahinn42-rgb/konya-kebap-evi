@@ -24,38 +24,38 @@ export default function AboutSection() {
                 >
                     {/* Corner Plates Decorations - Inside Card - Hidden on small mobile */}
                     <motion.img
-                        src="/images/slide-etliekmek.png"
+                        src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=200"
                         alt="Etliekmek"
-                        className="absolute -top-3 -left-3 sm:-top-4 sm:-left-4 lg:-top-6 lg:-left-6 w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-contain rounded-full drop-shadow-2xl z-20 cursor-pointer hidden sm:block"
+                        className="absolute -top-3 -left-3 sm:-top-4 sm:-left-4 lg:-top-6 lg:-left-6 w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-cover rounded-full drop-shadow-2xl z-20 cursor-pointer hidden sm:block border-2 border-[#d4af37]/30"
                         initial={{ opacity: 0, x: -60, y: -60, rotate: -30 }}
-                        whileInView={{ opacity: 0.8, x: 0, y: 0, rotate: 0 }}
+                        whileInView={{ opacity: 0.9, x: 0, y: 0, rotate: 0 }}
                         whileHover={{ scale: 1.15, rotate: -8, opacity: 1 }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                     />
                     <motion.img
-                        src="/images/slide-adana.png"
+                        src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=200"
                         alt="Adana Kebap"
-                        className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 lg:-top-6 lg:-right-6 w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-contain rounded-full drop-shadow-2xl z-20 cursor-pointer hidden sm:block"
+                        className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 lg:-top-6 lg:-right-6 w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-cover rounded-full drop-shadow-2xl z-20 cursor-pointer hidden sm:block border-2 border-[#d4af37]/30"
                         initial={{ opacity: 0, x: 60, y: -60, rotate: 30 }}
-                        whileInView={{ opacity: 0.8, x: 0, y: 0, rotate: 0 }}
+                        whileInView={{ opacity: 0.9, x: 0, y: 0, rotate: 0 }}
                         whileHover={{ scale: 1.15, rotate: 8, opacity: 1 }}
                         transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
                     />
                     <motion.img
-                        src="/images/slide-meze.png"
+                        src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=200"
                         alt="Meze"
-                        className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 lg:-bottom-6 lg:-left-6 w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-contain rounded-full drop-shadow-2xl z-20 cursor-pointer hidden sm:block"
+                        className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 lg:-bottom-6 lg:-left-6 w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-cover rounded-full drop-shadow-2xl z-20 cursor-pointer hidden sm:block border-2 border-[#d4af37]/30"
                         initial={{ opacity: 0, x: -60, y: 60, rotate: -30 }}
-                        whileInView={{ opacity: 0.8, x: 0, y: 0, rotate: 0 }}
+                        whileInView={{ opacity: 0.9, x: 0, y: 0, rotate: 0 }}
                         whileHover={{ scale: 1.15, rotate: -8, opacity: 1 }}
                         transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
                     />
                     <motion.img
-                        src="/images/slide-baklava.png"
+                        src="https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=200"
                         alt="Baklava"
-                        className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 lg:-bottom-6 lg:-right-6 w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-contain rounded-full drop-shadow-2xl z-20 cursor-pointer hidden sm:block"
+                        className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 lg:-bottom-6 lg:-right-6 w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-cover rounded-full drop-shadow-2xl z-20 cursor-pointer hidden sm:block border-2 border-[#d4af37]/30"
                         initial={{ opacity: 0, x: 60, y: 60, rotate: 30 }}
-                        whileInView={{ opacity: 0.8, x: 0, y: 0, rotate: 0 }}
+                        whileInView={{ opacity: 0.9, x: 0, y: 0, rotate: 0 }}
                         whileHover={{ scale: 1.15, rotate: 8, opacity: 1 }}
                         transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
                     />
