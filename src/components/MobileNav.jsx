@@ -8,6 +8,7 @@ const menuItems = [
     { label: 'ANA SAYFA', href: '/', isPage: true },
     { label: 'MENÜMÜZ', href: '/menu', isPage: true, openInNewTab: true },
     { label: 'HAKKIMIZDA', href: '/#about', isPage: false },
+    { label: 'GALERİ', href: '/#gallery', isPage: false },
     { label: 'İLETİŞİM', href: '/#contact', isPage: false },
 ];
 
@@ -103,7 +104,7 @@ export default function MobileNav() {
                                 <nav className="flex flex-col gap-4 mb-8">
                                     {menuItems.map((item, index) => {
                                         const isActive = pathname === item.href || (item.href === '/' && pathname === '/');
-                                        
+
                                         if (item.isPage) {
                                             return (
                                                 <Link
@@ -117,9 +118,8 @@ export default function MobileNav() {
                                                         initial={{ opacity: 0, x: 20 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: index * 0.1 }}
-                                                        className={`text-base font-bold tracking-[0.25em] py-3 transition-colors ${
-                                                            isActive ? 'text-[#d4af37]' : 'text-zinc-400 hover:text-[#d4af37]'
-                                                        }`}
+                                                        className={`text-base font-bold tracking-[0.25em] py-3 transition-colors ${isActive ? 'text-[#d4af37]' : 'text-zinc-400 hover:text-[#d4af37]'
+                                                            }`}
                                                     >
                                                         {item.label}
                                                     </motion.div>

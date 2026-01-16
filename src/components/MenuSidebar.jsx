@@ -6,8 +6,12 @@ import { usePathname } from 'next/navigation';
 
 const menuItems = [
     { label: 'ANA SAYFA', href: '/', isPage: true },
-    { label: 'MENÜMÜZ', href: '/menu', isPage: true, openInNewTab: true },
     { label: 'HAKKIMIZDA', href: '/#about', isPage: false },
+    { label: 'MENÜMÜZ', href: '/#menu', isPage: false },
+    { label: 'REZERVASYON', href: '/#reservation', isPage: false },
+    { label: 'GALERİ', href: '/#gallery', isPage: false },
+    { label: 'ÖDÜLLERİMİZ', href: '/#awards', isPage: false },
+    { label: 'BASINDA BİZ', href: '/#press', isPage: false },
     { label: 'İLETİŞİM', href: '/#contact', isPage: false },
 ];
 
