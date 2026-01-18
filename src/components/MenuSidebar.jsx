@@ -1,21 +1,36 @@
 'use client';
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Instagram, Facebook, X } from 'lucide-react';
+import {
+    Instagram, Facebook, X,
+    Home, Info, UtensilsCrossed, CalendarCheck,
+    Images, Award, Newspaper, Heart, Users, Phone
+} from 'lucide-react';
 
 const menuItems = [
-    { label: 'ANA SAYFA', href: '/', isPage: true },
-    { label: 'HAKKIMIZDA', href: '/#about', isPage: false },
-    { label: 'MENÜMÜZ', href: '/menu', isModal: true },
-    { label: 'REZERVASYON', href: '/#reservation', isPage: false },
-    { label: 'GALERİ', href: '/#gallery', isPage: false },
-    { label: 'ÖDÜLLERİMİZ', href: '/#awards', isPage: false },
-    { label: 'BASINDA BİZ', href: '/#press', isPage: false },
-    { label: 'SOSYAL SORUMLULUK', href: '/#sosyal-sorumluluk', isPage: false },
-    { label: 'İNSAN KAYNAKLARI', href: '/#insan-kaynaklari', isPage: false },
-    { label: 'İLETİŞİM', href: '/#contact', isPage: false },
+    { label: 'ANA SAYFA', href: '/', isPage: true, icon: Home },
+    { label: 'HAKKIMIZDA', href: '/#about', isPage: false, icon: Info },
+    { label: 'MENÜMÜZ', href: '/menu', isModal: true, icon: UtensilsCrossed },
+    { label: 'REZERVASYON', href: '/#reservation', isPage: false, icon: CalendarCheck },
+    { label: 'GALERİ', href: '/#gallery', isPage: false, icon: Images },
+    { label: 'ÖDÜLLERİMİZ', href: '/#awards', isPage: false, icon: Award },
+    { label: 'BASINDA BİZ', href: '/#press', isPage: false, icon: Newspaper },
+    { label: 'SOSYAL SORUMLULUK', href: '/#sosyal-sorumluluk', isPage: false, icon: Heart },
+    { label: 'İNSAN KAYNAKLARI', href: '/#insan-kaynaklari', isPage: false, icon: Users },
+    { label: 'İLETİŞİM', href: '/#contact', isPage: false, icon: Phone },
 ];
+
+// Helper component to manage hover state
+const HoverWrapper = ({ children }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const hoverProps = {
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+    };
+    return children(isHovered, hoverProps);
+};
 
 export default function MenuSidebar() {
     const pathname = usePathname();
@@ -42,52 +57,72 @@ export default function MenuSidebar() {
             <nav className="flex flex-col gap-3 sm:gap-4">
                 {menuItems.map((item) => {
                     const isActive = pathname === item.href || (item.href === '/' && pathname === '/');
+                    const IconComponent = item.icon;
+
+                    const MenuItemContent = ({ isHovered }) => (
+                        <motion.span
+                            className={`flex items-center gap-2 sm:gap-3 text-xs sm:text-sm lg:text-base font-bold tracking-[0.2em] sm:tracking-[0.25em] text-left py-2 sm:py-2.5 lg:py-3 transition-colors cursor-pointer ${isActive ? 'text-[#d4af37]' : 'text-zinc-400 hover:text-[#d4af37]'}`}
+                            whileHover={{ x: 10 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            {item.label}
+                            <AnimatePresence>
+                                {isHovered && (
+                                    <motion.span
+                                        initial={{ opacity: 0, scale: 0, x: 10 }}
+                                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                                        exit={{ opacity: 0, scale: 0, x: 10 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="text-[#d4af37]"
+                                    >
+                                        <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
+                        </motion.span>
+                    );
 
                     if (item.isPage) {
                         return (
-                            <Link
-                                key={item.label}
-                                href={item.href}
-                                target={item.openInNewTab ? '_blank' : undefined}
-                                rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
-                            >
-                                <motion.span
-                                    className={`block text-xs sm:text-sm lg:text-base font-bold tracking-[0.2em] sm:tracking-[0.25em] text-left py-2 sm:py-2.5 lg:py-3 transition-colors cursor-pointer ${isActive ? 'text-[#d4af37]' : 'text-zinc-400 hover:text-[#d4af37]'
-                                        }`}
-                                    whileHover={{ x: 10 }}
-                                    transition={{ duration: 0.2 }}
-                                >
-                                    {item.label}
-                                </motion.span>
-                            </Link>
+                            <HoverWrapper key={item.label}>
+                                {(isHovered, hoverProps) => (
+                                    <Link
+                                        href={item.href}
+                                        target={item.openInNewTab ? '_blank' : undefined}
+                                        rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
+                                        {...hoverProps}
+                                    >
+                                        <MenuItemContent isHovered={isHovered} />
+                                    </Link>
+                                )}
+                            </HoverWrapper>
                         );
                     } else if (item.isModal) {
                         return (
-                            <motion.span
-                                key={item.label}
-                                onClick={() => {
-                                    if (typeof window !== 'undefined' && window.openMenuModal) {
-                                        window.openMenuModal();
-                                    }
-                                }}
-                                className="block text-xs sm:text-sm lg:text-base font-bold tracking-[0.2em] sm:tracking-[0.25em] text-left py-2 sm:py-2.5 lg:py-3 transition-colors text-zinc-400 hover:text-[#d4af37] cursor-pointer"
-                                whileHover={{ x: 10 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                {item.label}
-                            </motion.span>
+                            <HoverWrapper key={item.label}>
+                                {(isHovered, hoverProps) => (
+                                    <div
+                                        onClick={() => {
+                                            if (typeof window !== 'undefined' && window.openMenuModal) {
+                                                window.openMenuModal();
+                                            }
+                                        }}
+                                        {...hoverProps}
+                                    >
+                                        <MenuItemContent isHovered={isHovered} />
+                                    </div>
+                                )}
+                            </HoverWrapper>
                         );
                     } else {
                         return (
-                            <motion.span
-                                key={item.label}
-                                onClick={() => handleLinkClick(item.href)}
-                                className="block text-xs sm:text-sm lg:text-base font-bold tracking-[0.2em] sm:tracking-[0.25em] text-left py-2 sm:py-2.5 lg:py-3 transition-colors text-zinc-400 hover:text-[#d4af37] cursor-pointer"
-                                whileHover={{ x: 10 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                {item.label}
-                            </motion.span>
+                            <HoverWrapper key={item.label}>
+                                {(isHovered, hoverProps) => (
+                                    <div onClick={() => handleLinkClick(item.href)} {...hoverProps}>
+                                        <MenuItemContent isHovered={isHovered} />
+                                    </div>
+                                )}
+                            </HoverWrapper>
                         );
                     }
                 })}

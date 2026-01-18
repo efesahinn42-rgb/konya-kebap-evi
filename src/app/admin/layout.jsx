@@ -16,13 +16,15 @@ import {
     LogOut,
     Menu,
     X,
-    ChefHat
+    ChefHat,
+    UtensilsCrossed
 } from 'lucide-react';
 
 const menuItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Hero Slider', href: '/admin/slider', icon: ImageIcon },
     { name: 'Ocakbaşı Videoları', href: '/admin/videos', icon: Video },
+    { name: 'Menü Yönetimi', href: '/admin/menu', icon: UtensilsCrossed },
     { name: 'Galeri', href: '/admin/gallery', icon: Images },
     { name: 'Ödüllerimiz', href: '/admin/awards', icon: Award },
     { name: 'Basında Biz', href: '/admin/press', icon: Newspaper },

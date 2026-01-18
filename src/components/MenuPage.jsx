@@ -1,9 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
-const menuData = [
+// Fallback data when database is empty
+const fallbackData = [
     {
         id: 'corbalar',
         title: 'ÇORBALAR',
@@ -141,6 +143,63 @@ const CategorySection = ({ category, isOpen, onToggle }) => (
 
 export default function MenuPage() {
     const [openCategories, setOpenCategories] = useState([]);
+    const [menuData, setMenuData] = useState(fallbackData);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchMenuData = async () => {
+            try {
+                // Fetch categories
+                const { data: categories, error: catError } = await supabase
+                    .from('menu_categories')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('display_order', { ascending: true });
+
+                if (catError || !categories || categories.length === 0) {
+                    setMenuData(fallbackData);
+                    setLoading(false);
+                    return;
+                }
+
+                // Fetch all menu items
+                const { data: items, error: itemError } = await supabase
+                    .from('menu_items')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('display_order', { ascending: true });
+
+                if (itemError) {
+                    setMenuData(fallbackData);
+                    setLoading(false);
+                    return;
+                }
+
+                // Combine categories with their items
+                const transformedData = categories.map(cat => ({
+                    id: cat.id,
+                    title: cat.title,
+                    icon: cat.icon || '🍽️',
+                    items: (items || [])
+                        .filter(item => item.category_id === cat.id)
+                        .map(item => ({
+                            name: item.name,
+                            price: parseFloat(item.price).toFixed(2),
+                            description: item.description || '',
+                            image: item.image_url || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=600'
+                        }))
+                }));
+
+                setMenuData(transformedData.length > 0 ? transformedData : fallbackData);
+            } catch (err) {
+                console.error('Error fetching menu:', err);
+                setMenuData(fallbackData);
+            }
+            setLoading(false);
+        };
+
+        fetchMenuData();
+    }, []);
 
     const toggleCategory = (id) => {
         setOpenCategories(prev =>
@@ -179,16 +238,24 @@ export default function MenuPage() {
                 </motion.div>
 
                 {/* Menu Categories */}
-                <div className="space-y-4">
-                    {menuData.map((category) => (
-                        <CategorySection
-                            key={category.id}
-                            category={category}
-                            isOpen={openCategories.includes(category.id)}
-                            onToggle={() => toggleCategory(category.id)}
-                        />
-                    ))}
-                </div>
+                {loading ? (
+                    <div className="space-y-4">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-zinc-900/80 rounded-2xl h-20 animate-pulse" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {menuData.map((category) => (
+                            <CategorySection
+                                key={category.id}
+                                category={category}
+                                isOpen={openCategories.includes(category.id)}
+                                onToggle={() => toggleCategory(category.id)}
+                            />
+                        ))}
+                    </div>
+                )}
 
                 {/* Footer Note */}
                 <motion.p

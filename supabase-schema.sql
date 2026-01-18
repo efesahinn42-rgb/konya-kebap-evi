@@ -178,5 +178,46 @@ CREATE POLICY "public_insert_applications" ON job_applications FOR INSERT WITH C
 CREATE POLICY "admin_all_applications" ON job_applications FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- =============================================
+-- 10. Menü Kategorileri Tablosu
+-- =============================================
+CREATE TABLE IF NOT EXISTS menu_categories (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    icon TEXT DEFAULT '🍽️',
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =============================================
+-- 11. Menü Öğeleri (Yemekler) Tablosu
+-- =============================================
+CREATE TABLE IF NOT EXISTS menu_items (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    category_id UUID REFERENCES menu_categories(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    image_url TEXT,
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Menu Categories RLS
+ALTER TABLE menu_categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "public_read_menu_categories" ON menu_categories;
+DROP POLICY IF EXISTS "admin_all_menu_categories" ON menu_categories;
+CREATE POLICY "public_read_menu_categories" ON menu_categories FOR SELECT USING (is_active = true);
+CREATE POLICY "admin_all_menu_categories" ON menu_categories FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Menu Items RLS
+ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "public_read_menu_items" ON menu_items;
+DROP POLICY IF EXISTS "admin_all_menu_items" ON menu_items;
+CREATE POLICY "public_read_menu_items" ON menu_items FOR SELECT USING (is_active = true);
+CREATE POLICY "admin_all_menu_items" ON menu_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- =============================================
 -- TAMAMLANDI!
 -- =============================================
