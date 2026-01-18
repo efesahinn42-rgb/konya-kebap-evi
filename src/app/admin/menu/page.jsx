@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Plus, Trash2, Save, X, Edit2, UtensilsCrossed, ChevronRight, ArrowLeft } from 'lucide-react';
+import { supabase, uploadFile } from '@/lib/supabase';
+import { Plus, Trash2, Save, X, Edit2, UtensilsCrossed, ChevronRight, ArrowLeft, Upload, Link as LinkIcon } from 'lucide-react';
 
 const emojiOptions = ['🍜', '🫓', '🍖', '🍰', '🥤', '🍽️', '🥗', '🍕', '🍝', '🥘', '🍳', '☕'];
 
@@ -21,6 +21,11 @@ export default function MenuManagement() {
     // Form states
     const [categoryForm, setCategoryForm] = useState({ title: '', icon: '🍽️' });
     const [itemForm, setItemForm] = useState({ name: '', description: '', price: '', image_url: '' });
+
+    // File upload states
+    const [uploadType, setUploadType] = useState('url'); // 'url' or 'file'
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState('');
 
     useEffect(() => {
         fetchCategories();
@@ -133,6 +138,10 @@ export default function MenuManagement() {
 
     // Item CRUD
     const openItemModal = (item = null) => {
+        setUploadType('url');
+        setSelectedFile(null);
+        setPreviewUrl('');
+
         if (item) {
             setEditingItem(item);
             setItemForm({
@@ -148,6 +157,14 @@ export default function MenuManagement() {
         setShowItemModal(true);
     };
 
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
+
     const saveItem = async () => {
         if (!itemForm.name || !itemForm.price) {
             alert('Lütfen yemek adı ve fiyatını girin');
@@ -156,10 +173,19 @@ export default function MenuManagement() {
 
         setSaving(true);
         try {
+            let imageUrl = itemForm.image_url;
+
+            // Upload file if selected
+            if (uploadType === 'file' && selectedFile) {
+                const fileName = `menu-${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+                imageUrl = await uploadFile('menu-images', fileName, selectedFile);
+            }
+
             const itemData = {
                 ...itemForm,
                 price: parseFloat(itemForm.price),
-                category_id: selectedCategory.id
+                category_id: selectedCategory.id,
+                image_url: imageUrl
             };
 
             if (editingItem) {
@@ -182,7 +208,14 @@ export default function MenuManagement() {
             setShowItemModal(false);
         } catch (err) {
             console.error('Error saving item:', err);
-            alert('Yemek kaydedilirken bir hata oluştu');
+            const msg = err?.message || 'Bilinmeyen hata';
+            if (msg.includes('Bucket not found') || msg.includes('The resource was not found')) {
+                alert('HATA: "menu-images" adında bir Storage Bucket bulunamadı.\n\nLütfen Supabase panelinden Storage kısmına gidip "menu-images" adında public bir bucket oluşturun.');
+            } else if (msg.includes('row-level security') || msg.includes('violates new row')) {
+                alert('HATA: Yetki sorunu.\n\nStorage bucket için RLS policy ayarlarının yapıldığından emin olun.');
+            } else {
+                alert(`Yemek kaydedilirken hata oluştu: ${msg}`);
+            }
         }
         setSaving(false);
     };
@@ -307,8 +340,8 @@ export default function MenuManagement() {
                                     <button
                                         onClick={() => toggleCategoryActive(category)}
                                         className={`p-2 rounded-lg transition-colors ${category.is_active
-                                                ? 'bg-green-500/20 text-green-400'
-                                                : 'bg-zinc-800 text-zinc-400'
+                                            ? 'bg-green-500/20 text-green-400'
+                                            : 'bg-zinc-800 text-zinc-400'
                                             }`}
                                     >
                                         {category.is_active ? '✓' : '○'}
@@ -387,8 +420,8 @@ export default function MenuManagement() {
                                     <button
                                         onClick={() => toggleItemActive(item)}
                                         className={`p-2 rounded-lg transition-colors ${item.is_active
-                                                ? 'bg-green-500/20 text-green-400'
-                                                : 'bg-zinc-800/90 text-zinc-400'
+                                            ? 'bg-green-500/20 text-green-400'
+                                            : 'bg-zinc-800/90 text-zinc-400'
                                             }`}
                                     >
                                         {item.is_active ? '✓' : '○'}
@@ -431,8 +464,8 @@ export default function MenuManagement() {
                                             key={emoji}
                                             onClick={() => setCategoryForm({ ...categoryForm, icon: emoji })}
                                             className={`w-12 h-12 text-2xl rounded-xl transition-all ${categoryForm.icon === emoji
-                                                    ? 'bg-[#d4af37] scale-110'
-                                                    : 'bg-zinc-800 hover:bg-zinc-700'
+                                                ? 'bg-[#d4af37] scale-110'
+                                                : 'bg-zinc-800 hover:bg-zinc-700'
                                                 }`}
                                         >
                                             {emoji}
@@ -524,17 +557,70 @@ export default function MenuManagement() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-zinc-400 mb-2">Görsel URL</label>
-                                <input
-                                    type="url"
-                                    value={itemForm.image_url}
-                                    onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })}
-                                    placeholder="https://..."
-                                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]"
-                                />
-                                {itemForm.image_url && (
-                                    <div className="mt-2 aspect-video rounded-xl overflow-hidden bg-zinc-800">
-                                        <img src={itemForm.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                <label className="block text-sm font-medium text-zinc-400 mb-2">Görsel</label>
+
+                                <div className="flex bg-zinc-800 p-1 rounded-xl mb-4">
+                                    <button
+                                        onClick={() => setUploadType('url')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition-all ${uploadType === 'url'
+                                            ? 'bg-[#d4af37] text-black'
+                                            : 'text-zinc-400 hover:text-white'
+                                            }`}
+                                    >
+                                        <LinkIcon className="w-4 h-4" />
+                                        URL
+                                    </button>
+                                    <button
+                                        onClick={() => setUploadType('file')}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition-all ${uploadType === 'file'
+                                            ? 'bg-[#d4af37] text-black'
+                                            : 'text-zinc-400 hover:text-white'
+                                            }`}
+                                    >
+                                        <Upload className="w-4 h-4" />
+                                        Dosya Yükle
+                                    </button>
+                                </div>
+
+                                {uploadType === 'url' ? (
+                                    <div className="space-y-2">
+                                        <input
+                                            type="url"
+                                            value={itemForm.image_url}
+                                            onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })}
+                                            placeholder="https://..."
+                                            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]"
+                                        />
+                                        {itemForm.image_url && (
+                                            <div className="mt-2 aspect-video rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700">
+                                                <img src={itemForm.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleFileSelect}
+                                                className="hidden"
+                                                id="menu-item-upload"
+                                            />
+                                            <label
+                                                htmlFor="menu-item-upload"
+                                                className="flex flex-col items-center justify-center w-full h-40 bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-xl cursor-pointer hover:border-[#d4af37] transition-colors"
+                                            >
+                                                {previewUrl ? (
+                                                    <img src={previewUrl} alt="Preview" className="h-full w-full object-contain rounded-xl" />
+                                                ) : (
+                                                    <>
+                                                        <Upload className="w-8 h-8 text-zinc-500 mb-2" />
+                                                        <span className="text-zinc-400 text-sm">Dosya seçmek için tıklayın</span>
+                                                    </>
+                                                )}
+                                            </label>
+                                        </div>
                                     </div>
                                 )}
                             </div>

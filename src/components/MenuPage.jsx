@@ -186,7 +186,7 @@ export default function MenuPage() {
                             name: item.name,
                             price: parseFloat(item.price).toFixed(2),
                             description: item.description || '',
-                            image: item.image_url || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=600'
+                            image: item.image_url
                         }))
                 }));
 
