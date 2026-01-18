@@ -2,77 +2,47 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
-const galleryItems = [
-    // Misafirlerimiz - Guests enjoying the restaurant
-    {
-        category: 'misafir',
-        src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=800',
-        alt: 'Misafirlerimiz - 1'
-    },
-    {
-        category: 'misafir',
-        src: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800',
-        alt: 'Misafirlerimiz - 2'
-    },
-    {
-        category: 'misafir',
-        src: 'https://images.unsplash.com/photo-1559329007-40df8a9345d8?q=80&w=800',
-        alt: 'Misafirlerimiz - 3'
-    },
-    {
-        category: 'misafir',
-        src: 'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?q=80&w=800',
-        alt: 'Misafirlerimiz - 4'
-    },
-    {
-        category: 'misafir',
-        src: 'https://images.unsplash.com/photo-1529543544277-750e9820f8f5?q=80&w=800',
-        alt: 'Misafirlerimiz - 5'
-    },
-    {
-        category: 'misafir',
-        src: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=800',
-        alt: 'Misafirlerimiz - 6'
-    },
-    // İmza Lezzetlerimiz - Signature dishes
-    {
-        category: 'imza',
-        src: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800',
-        alt: 'Kuzu Tandır'
-    },
-    {
-        category: 'imza',
-        src: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=800',
-        alt: 'Adana Kebap'
-    },
-    {
-        category: 'imza',
-        src: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc783?q=80&w=800',
-        alt: 'Etliekmek'
-    },
-    {
-        category: 'imza',
-        src: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=800',
-        alt: 'Pide'
-    },
-    {
-        category: 'imza',
-        src: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=800',
-        alt: 'Baklava'
-    },
-    {
-        category: 'imza',
-        src: 'https://images.unsplash.com/photo-1508737027454-e6454ef45afd?q=80&w=800',
-        alt: 'Künefe'
-    },
+// Fallback data in case database is empty
+const fallbackItems = [
+    { category: 'misafir', src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=800', alt: 'Misafirlerimiz' },
+    { category: 'imza', src: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800', alt: 'İmza Lezzetlerimiz' },
 ];
 
 export default function GallerySection() {
+    const [galleryItems, setGalleryItems] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState('misafir');
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [currentCategoryImages, setCurrentCategoryImages] = useState([]);
+
+    // Fetch gallery items from Supabase
+    useEffect(() => {
+        const fetchGalleryItems = async () => {
+            const { data, error } = await supabase
+                .from('gallery_items')
+                .select('*')
+                .eq('is_active', true)
+                .order('display_order', { ascending: true });
+
+            if (!error && data && data.length > 0) {
+                // Transform data to match the component's expected format
+                const items = data.map(item => ({
+                    category: item.category,
+                    src: item.image_url,
+                    alt: item.alt_text || (item.category === 'misafir' ? 'Misafirlerimiz' : 'İmza Lezzeti')
+                }));
+                setGalleryItems(items);
+            } else {
+                setGalleryItems(fallbackItems);
+            }
+            setLoading(false);
+        };
+
+        fetchGalleryItems();
+    }, []);
 
     // Filter images by category
     const filteredItems = galleryItems.filter(item => item.category === activeCategory);
@@ -186,34 +156,46 @@ export default function GallerySection() {
                     </div>
 
                     {/* Gallery Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-                        <AnimatePresence mode="popLayout">
-                            {filteredItems.map((item, index) => (
-                                <motion.div
-                                    key={item.src}
-                                    layout
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="group cursor-pointer"
-                                    onClick={() => openLightbox(index, activeCategory)}
-                                >
-                                    <div className="relative aspect-square overflow-hidden rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#d4af37]/30 transition-all duration-300">
-                                        <img
-                                            src={item.src}
-                                            alt={item.alt}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                            <p className="text-white text-sm sm:text-base font-bold">{item.alt}</p>
-                                        </div>
-                                    </div>
-                                </motion.div>
+                    {loading ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                <div key={i} className="aspect-square bg-zinc-800 rounded-xl sm:rounded-2xl animate-pulse" />
                             ))}
-                        </AnimatePresence>
-                    </div>
+                        </div>
+                    ) : filteredItems.length === 0 ? (
+                        <div className="py-12 text-center">
+                            <p className="text-zinc-400">Bu kategoride henüz fotoğraf bulunmuyor.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                            <AnimatePresence mode="popLayout">
+                                {filteredItems.map((item, index) => (
+                                    <motion.div
+                                        key={item.src}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.8 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="group cursor-pointer"
+                                        onClick={() => openLightbox(index, activeCategory)}
+                                    >
+                                        <div className="relative aspect-square overflow-hidden rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#d4af37]/30 transition-all duration-300">
+                                            <img
+                                                src={item.src}
+                                                alt={item.alt}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                                <p className="text-white text-sm sm:text-base font-bold">{item.alt}</p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </div>
+                    )}
                 </motion.div>
             </div>
 

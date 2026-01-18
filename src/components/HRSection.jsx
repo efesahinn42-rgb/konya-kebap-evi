@@ -1,8 +1,8 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Briefcase, GraduationCap, Heart, Clock, Award, Send } from 'lucide-react';
-import Image from 'next/image';
-import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 const benefits = [
     {
@@ -27,20 +27,24 @@ const benefits = [
     },
 ];
 
-const openPositions = [
+// Fallback positions
+const fallbackPositions = [
     {
+        id: 'fallback-1',
         title: 'Aşçı',
         type: 'Tam Zamanlı',
         location: 'İstanbul',
         description: 'Geleneksel Türk mutfağında deneyimli aşçı arıyoruz.'
     },
     {
+        id: 'fallback-2',
         title: 'Garson',
         type: 'Tam / Yarı Zamanlı',
         location: 'İstanbul',
         description: 'Misafir memnuniyetini ön planda tutan takım arkadaşları arıyoruz.'
     },
     {
+        id: 'fallback-3',
         title: 'Komi',
         type: 'Tam Zamanlı',
         location: 'İstanbul',
@@ -49,6 +53,8 @@ const openPositions = [
 ];
 
 export default function HRSection() {
+    const [openPositions, setOpenPositions] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -56,12 +62,64 @@ export default function HRSection() {
         position: '',
         message: ''
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [submitError, setSubmitError] = useState('');
 
-    const handleSubmit = (e) => {
+    // Fetch job positions
+    useEffect(() => {
+        const fetchPositions = async () => {
+            const { data, error } = await supabase
+                .from('job_positions')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
+
+            if (!error && data && data.length > 0) {
+                setOpenPositions(data);
+            } else {
+                setOpenPositions(fallbackPositions);
+            }
+            setLoading(false);
+        };
+
+        fetchPositions();
+    }, []);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitted(true);
-        setTimeout(() => setIsSubmitted(false), 3000);
+        setIsSubmitting(true);
+        setSubmitError('');
+
+        try {
+            // Find selected position
+            const selectedPosition = openPositions.find(p => p.id === formData.position || p.title === formData.position);
+
+            const applicationData = {
+                position_id: selectedPosition?.id?.startsWith('fallback') ? null : selectedPosition?.id || null,
+                position_title: selectedPosition?.title || formData.position || 'Diğer',
+                full_name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                message: formData.message,
+                status: 'pending'
+            };
+
+            const { error } = await supabase
+                .from('job_applications')
+                .insert(applicationData);
+
+            if (error) throw error;
+
+            setIsSubmitted(true);
+            setFormData({ name: '', email: '', phone: '', position: '', message: '' });
+            setTimeout(() => setIsSubmitted(false), 5000);
+        } catch (err) {
+            console.error('Error submitting application:', err);
+            setSubmitError('Başvuru gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
+        }
+
+        setIsSubmitting(false);
     };
 
     return (
@@ -165,34 +223,53 @@ export default function HRSection() {
                     <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white text-center mb-8 sm:mb-10">
                         Açık Pozisyonlar
                     </h3>
-                    <div className="space-y-4">
-                        {openPositions.map((position, index) => (
-                            <motion.div
-                                key={position.title}
-                                initial={{ opacity: 0, x: -20 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: 0.1 * index }}
-                                className="bg-zinc-900/60 backdrop-blur-xl rounded-2xl p-5 sm:p-6 border border-white/5 hover:border-[#d4af37]/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                            >
-                                <div>
-                                    <h4 className="text-lg sm:text-xl font-bold text-white mb-1">{position.title}</h4>
-                                    <p className="text-zinc-400 text-sm mb-2">{position.description}</p>
-                                    <div className="flex gap-3 text-xs">
-                                        <span className="bg-[#d4af37]/20 text-[#d4af37] px-3 py-1 rounded-full">{position.type}</span>
-                                        <span className="bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full">{position.location}</span>
+                    {loading ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-24 bg-zinc-800/30 rounded-2xl animate-pulse" />
+                            ))}
+                        </div>
+                    ) : openPositions.length === 0 ? (
+                        <div className="text-center py-12 bg-zinc-900/60 rounded-2xl">
+                            <p className="text-zinc-400">Şu anda açık pozisyon bulunmamaktadır.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {openPositions.map((position, index) => (
+                                <motion.div
+                                    key={position.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.5, delay: 0.1 * index }}
+                                    className="bg-zinc-900/60 backdrop-blur-xl rounded-2xl p-5 sm:p-6 border border-white/5 hover:border-[#d4af37]/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                >
+                                    <div>
+                                        <h4 className="text-lg sm:text-xl font-bold text-white mb-1">{position.title}</h4>
+                                        <p className="text-zinc-400 text-sm mb-2">{position.description}</p>
+                                        <div className="flex gap-3 text-xs">
+                                            <span className="bg-[#d4af37]/20 text-[#d4af37] px-3 py-1 rounded-full">{position.type}</span>
+                                            <span className="bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full">{position.location}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <button className="bg-gradient-to-r from-[#d4af37] to-[#b8962f] text-black font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap">
-                                    Başvur
-                                </button>
-                            </motion.div>
-                        ))}
-                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setFormData({ ...formData, position: position.id || position.title });
+                                            document.getElementById('application-form')?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="bg-gradient-to-r from-[#d4af37] to-[#b8962f] text-black font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap"
+                                    >
+                                        Başvur
+                                    </button>
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
                 </motion.div>
 
                 {/* Application Form */}
                 <motion.div
+                    id="application-form"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -242,19 +319,23 @@ export default function HRSection() {
                             <input
                                 type="tel"
                                 placeholder="Telefon Numaranız"
+                                required
                                 className="bg-zinc-900/80 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:border-[#d4af37]/50 focus:outline-none transition-colors"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             />
                             <select
+                                required
                                 className="bg-zinc-900/80 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#d4af37]/50 focus:outline-none transition-colors"
                                 value={formData.position}
                                 onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                             >
                                 <option value="" className="bg-zinc-900">Pozisyon Seçin</option>
-                                <option value="asci" className="bg-zinc-900">Aşçı</option>
-                                <option value="garson" className="bg-zinc-900">Garson</option>
-                                <option value="komi" className="bg-zinc-900">Komi</option>
+                                {openPositions.map((pos) => (
+                                    <option key={pos.id} value={pos.id || pos.title} className="bg-zinc-900">
+                                        {pos.title}
+                                    </option>
+                                ))}
                                 <option value="diger" className="bg-zinc-900">Diğer</option>
                             </select>
                             <textarea
@@ -264,12 +345,32 @@ export default function HRSection() {
                                 value={formData.message}
                                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                             />
+
+                            {submitError && (
+                                <div className="sm:col-span-2 text-red-400 text-sm text-center">
+                                    {submitError}
+                                </div>
+                            )}
+
                             <button
                                 type="submit"
-                                className="sm:col-span-2 bg-gradient-to-r from-[#d4af37] via-[#f0d675] to-[#d4af37] text-black font-bold py-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                                disabled={isSubmitting}
+                                className="sm:col-span-2 bg-gradient-to-r from-[#d4af37] via-[#f0d675] to-[#d4af37] text-black font-bold py-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Send className="w-5 h-5" />
-                                Başvuruyu Gönder
+                                {isSubmitting ? (
+                                    <>
+                                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        Gönderiliyor...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="w-5 h-5" />
+                                        Başvuruyu Gönder
+                                    </>
+                                )}
                             </button>
                         </form>
                     )}

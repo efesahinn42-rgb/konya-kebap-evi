@@ -1,15 +1,86 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
+
+// Fallback video URLs
+const fallbackBackgroundVideo = "https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&mute=1&controls=0&loop=1&playlist=ScMzIvxBSi4&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1";
+const fallbackModalVideo = "https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&rel=0";
 
 export default function AboutSection() {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
+    const [backgroundVideoUrl, setBackgroundVideoUrl] = useState('');
+    const [modalVideoUrl, setModalVideoUrl] = useState('');
+    const [isYouTubeBackground, setIsYouTubeBackground] = useState(true);
+    const [isYouTubeModal, setIsYouTubeModal] = useState(true);
 
-    // High quality food/cooking background video (Pexels Direct MP4)
-    const backgroundVideoUrl = "https://assets.mixkit.co/videos/preview/mixkit-chef-cutting-vegetables-in-a-kitchen-40546-large.mp4";
-    // YouTube test video for modal
-    const modalVideoUrl = "https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&rel=0";
+    // Fetch videos from Supabase
+    useEffect(() => {
+        const fetchVideos = async () => {
+            const { data, error } = await supabase
+                .from('ocakbasi_videos')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: false });
+
+            if (!error && data && data.length > 0) {
+                // Find background video
+                const bgVideo = data.find(v => v.is_background);
+                if (bgVideo) {
+                    const isYT = bgVideo.video_url.includes('youtube');
+                    setIsYouTubeBackground(isYT);
+                    if (isYT) {
+                        // Convert to embed URL with autoplay and mute
+                        const videoId = extractYouTubeId(bgVideo.video_url);
+                        setBackgroundVideoUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&playsinline=1&rel=0&showinfo=0`);
+                    } else {
+                        setBackgroundVideoUrl(bgVideo.video_url);
+                    }
+                } else {
+                    setBackgroundVideoUrl(fallbackBackgroundVideo);
+                }
+
+                // Find modal video
+                const mdlVideo = data.find(v => v.is_modal);
+                if (mdlVideo) {
+                    const isYT = mdlVideo.video_url.includes('youtube');
+                    setIsYouTubeModal(isYT);
+                    if (isYT) {
+                        const videoId = extractYouTubeId(mdlVideo.video_url);
+                        setModalVideoUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`);
+                    } else {
+                        setModalVideoUrl(mdlVideo.video_url);
+                    }
+                } else if (data.length > 0) {
+                    // Use first video as modal if no modal-specific video
+                    const firstVideo = data[0];
+                    const isYT = firstVideo.video_url.includes('youtube');
+                    setIsYouTubeModal(isYT);
+                    if (isYT) {
+                        const videoId = extractYouTubeId(firstVideo.video_url);
+                        setModalVideoUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`);
+                    } else {
+                        setModalVideoUrl(firstVideo.video_url);
+                    }
+                } else {
+                    setModalVideoUrl(fallbackModalVideo);
+                }
+            } else {
+                // Use fallback
+                setBackgroundVideoUrl(fallbackBackgroundVideo);
+                setModalVideoUrl(fallbackModalVideo);
+            }
+        };
+
+        fetchVideos();
+    }, []);
+
+    // Extract YouTube video ID
+    const extractYouTubeId = (url) => {
+        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        return match ? match[1] : '';
+    };
 
     return (
         <section id="about" className="relative bg-[#0a0a0a] overflow-hidden w-full">
@@ -22,7 +93,7 @@ export default function AboutSection() {
                     transition={{ duration: 1 }}
                     viewport={{ once: true }}
                 >
-                    {/* Corner Plates Decorations - Inside Card - Hidden on small mobile */}
+                    {/* Corner Plates Decorations */}
                     <motion.img
                         src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=200"
                         alt="Etliekmek"
@@ -127,14 +198,27 @@ export default function AboutSection() {
                     transition={{ duration: 1 }}
                     viewport={{ once: true }}
                 >
-                    {/* Background Silent Video (YouTube Embed) */}
+                    {/* Background Video */}
                     <div className="absolute inset-0 w-full h-full pointer-events-none scale-125">
-                        <iframe
-                            src="https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&mute=1&controls=0&loop=1&playlist=ScMzIvxBSi4&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1"
-                            className="w-full h-full object-cover opacity-60"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            title="Background Video"
-                        />
+                        {backgroundVideoUrl && (
+                            isYouTubeBackground ? (
+                                <iframe
+                                    src={backgroundVideoUrl}
+                                    className="w-full h-full object-cover opacity-60"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    title="Background Video"
+                                />
+                            ) : (
+                                <video
+                                    src={backgroundVideoUrl}
+                                    className="w-full h-full object-cover opacity-60"
+                                    autoPlay
+                                    muted
+                                    loop
+                                    playsInline
+                                />
+                            )
+                        )}
                     </div>
 
                     {/* Premium Overlays */}
@@ -227,12 +311,23 @@ export default function AboutSection() {
                             exit={{ opacity: 0, scale: 0.8, y: 50 }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
                         >
-                            <iframe
-                                src={modalVideoUrl}
-                                className="w-full h-full border-none"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                title="Konya Kebap Evi Tanıtım"
-                            />
+                            {modalVideoUrl && (
+                                isYouTubeModal ? (
+                                    <iframe
+                                        src={modalVideoUrl}
+                                        className="w-full h-full border-none"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        title="Konya Kebap Evi Tanıtım"
+                                    />
+                                ) : (
+                                    <video
+                                        src={modalVideoUrl}
+                                        className="w-full h-full object-contain"
+                                        controls
+                                        autoPlay
+                                    />
+                                )
+                            )}
                         </motion.div>
                     </motion.div>
                 )}

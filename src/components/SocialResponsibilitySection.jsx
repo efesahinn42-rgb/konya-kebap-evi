@@ -1,9 +1,11 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Utensils } from 'lucide-react';
-import Image from 'next/image';
+import { supabase } from '@/lib/supabase';
 
-const initiatives = [
+// Fallback data
+const fallbackInitiatives = [
     {
         title: 'Gıda Yardımı',
         description: 'Her gün ihtiyaç sahiplerine sıcak yemek dağıtımı yapıyoruz.',
@@ -26,7 +28,7 @@ const initiatives = [
     },
 ];
 
-const impactStats = [
+const fallbackStats = [
     { number: '10K+', label: 'Dağıtılan Porsiyon' },
     { number: '50+', label: 'Desteklenen Öğrenci' },
     { number: '100%', label: 'Geri Dönüşüm Oranı' },
@@ -34,6 +36,49 @@ const impactStats = [
 ];
 
 export default function SocialResponsibilitySection() {
+    const [initiatives, setInitiatives] = useState([]);
+    const [impactStats, setImpactStats] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            // Fetch social projects
+            const { data: projectsData, error: projectsError } = await supabase
+                .from('social_projects')
+                .select('*')
+                .eq('is_active', true)
+                .order('display_order', { ascending: true });
+
+            // Fetch impact stats
+            const { data: statsData, error: statsError } = await supabase
+                .from('impact_stats')
+                .select('*')
+                .eq('is_active', true)
+                .order('display_order', { ascending: true });
+
+            if (!projectsError && projectsData && projectsData.length > 0) {
+                const projects = projectsData.map(p => ({
+                    title: p.title,
+                    description: p.description,
+                    image: p.image_url
+                }));
+                setInitiatives(projects);
+            } else {
+                setInitiatives(fallbackInitiatives);
+            }
+
+            if (!statsError && statsData && statsData.length > 0) {
+                setImpactStats(statsData);
+            } else {
+                setImpactStats(fallbackStats);
+            }
+
+            setLoading(false);
+        };
+
+        fetchData();
+    }, []);
+
     return (
         <section id="sosyal-sorumluluk" className="relative bg-[#0a0a0a] overflow-hidden py-16 sm:py-20 lg:py-28">
             {/* Background Pattern */}
@@ -72,47 +117,55 @@ export default function SocialResponsibilitySection() {
                 </motion.div>
 
                 {/* Image Gallery Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-12 sm:mb-16 lg:mb-20">
-                    {initiatives.map((item, index) => (
-                        <motion.div
-                            key={item.title}
-                            initial={{ opacity: 0, y: 40 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6, delay: index * 0.15 }}
-                            className="group relative overflow-hidden rounded-2xl sm:rounded-3xl aspect-[4/3] cursor-pointer"
-                        >
-                            {/* Image */}
-                            <img
-                                src={item.image}
-                                alt={item.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                            />
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-12 sm:mb-16 lg:mb-20">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="aspect-[4/3] bg-zinc-800 rounded-2xl sm:rounded-3xl animate-pulse" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-12 sm:mb-16 lg:mb-20">
+                        {initiatives.map((item, index) => (
+                            <motion.div
+                                key={item.title}
+                                initial={{ opacity: 0, y: 40 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6, delay: index * 0.15 }}
+                                className="group relative overflow-hidden rounded-2xl sm:rounded-3xl aspect-[4/3] cursor-pointer"
+                            >
+                                {/* Image */}
+                                <img
+                                    src={item.image}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                />
 
-                            {/* Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-300" />
+                                {/* Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-300" />
 
-                            {/* Content */}
-                            <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end">
-                                <motion.div
-                                    initial={{ y: 20 }}
-                                    whileInView={{ y: 0 }}
-                                    transition={{ delay: 0.3 + index * 0.1 }}
-                                >
-                                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2 sm:mb-3">
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-zinc-300 text-sm sm:text-base lg:text-lg leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
-                                        {item.description}
-                                    </p>
-                                </motion.div>
+                                {/* Content */}
+                                <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end">
+                                    <motion.div
+                                        initial={{ y: 20 }}
+                                        whileInView={{ y: 0 }}
+                                        transition={{ delay: 0.3 + index * 0.1 }}
+                                    >
+                                        <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2 sm:mb-3">
+                                            {item.title}
+                                        </h3>
+                                        <p className="text-zinc-300 text-sm sm:text-base lg:text-lg leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
+                                            {item.description}
+                                        </p>
+                                    </motion.div>
 
-                                {/* Gold accent line */}
-                                <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[#d4af37] via-[#f0d675] to-[#d4af37] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
+                                    {/* Gold accent line */}
+                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[#d4af37] via-[#f0d675] to-[#d4af37] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Impact Stats */}
                 <motion.div
