@@ -8,7 +8,7 @@ const menuItems = [
     { label: 'ANA SAYFA', href: '/', isPage: true },
     { label: 'MENÜMÜZ', href: '/menu', isPage: true, openInNewTab: true },
     { label: 'HAKKIMIZDA', href: '/#about', isPage: false },
-    { label: 'GALERİ', href: '/#gallery', isPage: false },
+    { label: 'MİSAFİRLERİMİZ', href: '/#gallery', isPage: false },
     { label: 'İLETİŞİM', href: '/#contact', isPage: false },
 ];
 

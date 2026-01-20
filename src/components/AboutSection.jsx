@@ -3,10 +3,62 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
+import { Star, TrendingUp, Users, Award, Clock, Heart, Utensils, MapPin } from 'lucide-react';
+import ScrollDownButton from './ScrollDownButton';
+
+// Kayar istatistikler
+const statsData = [
+    { value: '4.8', label: 'Google Puanı', icon: Star },
+    { value: '5.0', label: 'Tripadvisor', icon: Star },
+    { value: '132K', label: 'Takipçi', icon: TrendingUp },
+    { value: '98%', label: 'Memnuniyet', icon: Heart },
+    { value: '20+', label: 'Yıl Tecrübe', icon: Clock },
+    { value: '50+', label: 'Tarif', icon: Utensils },
+    { value: '1M+', label: 'Mutlu Misafir', icon: Users },
+    { value: '3', label: 'Şube', icon: MapPin },
+    { value: '25+', label: 'Ödül', icon: Award },
+];
 
 // Fallback video URLs
 const fallbackBackgroundVideo = "https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&mute=1&controls=0&loop=1&playlist=ScMzIvxBSi4&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1";
 const fallbackModalVideo = "https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&rel=0";
+
+// Marquee Stats Component
+function MarqueeStats() {
+    return (
+        <div id="stats" className="relative overflow-hidden bg-gradient-to-r from-black via-zinc-900 to-black py-6 border-b border-[#d4af37]/20">
+            {/* Gradient overlays for smooth edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black to-transparent z-10" />
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black to-transparent z-10" />
+
+            <motion.div
+                className="flex gap-12 whitespace-nowrap"
+                animate={{ x: ['0%', '-50%'] }}
+                transition={{
+                    x: {
+                        repeat: Infinity,
+                        repeatType: 'loop',
+                        duration: 30,
+                        ease: 'linear',
+                    },
+                }}
+            >
+                {/* Duplicate stats for seamless loop */}
+                {[...statsData, ...statsData].map((stat, index) => {
+                    const Icon = stat.icon;
+                    return (
+                        <div key={index} className="flex items-center gap-3 px-4">
+                            <Icon className="w-5 h-5 text-[#d4af37]" fill={stat.icon === Star ? '#d4af37' : 'none'} />
+                            <span className="text-2xl sm:text-3xl font-black text-white">{stat.value}</span>
+                            <span className="text-sm text-zinc-400 font-medium">{stat.label}</span>
+                            <span className="text-[#d4af37]/30 ml-8">•</span>
+                        </div>
+                    );
+                })}
+            </motion.div>
+        </div>
+    );
+}
 
 export default function AboutSection() {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -84,10 +136,13 @@ export default function AboutSection() {
 
     return (
         <section id="about" className="relative bg-[#0a0a0a] overflow-hidden w-full">
+            {/* Marquee Stats Banner */}
+            <MarqueeStats />
+
             {/* Page 1: Introduction Text */}
-            <div className="min-h-screen flex items-center justify-center py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-12 border-b border-white/5">
+            <div className="flex items-center justify-center py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-12 border-b border-white/5">
                 <motion.div
-                    className="relative max-w-[1000px] w-full bg-zinc-900/40 backdrop-blur-xl border border-white/5 p-6 sm:p-8 md:p-10 lg:p-20 rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[3rem] text-center shadow-3xl group overflow-hidden"
+                    className="relative max-w-[900px] w-full bg-zinc-900/40 backdrop-blur-xl border border-white/5 p-6 sm:p-8 md:p-10 lg:p-14 rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[3rem] text-center shadow-3xl group overflow-hidden"
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1 }}
@@ -332,6 +387,10 @@ export default function AboutSection() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <div className="absolute bottom-4 left-0 right-0 z-20">
+                <ScrollDownButton targetId="reservation" light={true} />
+            </div>
         </section>
     );
 }

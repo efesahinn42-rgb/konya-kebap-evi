@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { getUserRole, hasAccess, isMenuVisible } from '@/lib/auth';
 import Link from 'next/link';
 import {
     LayoutDashboard,
@@ -17,11 +18,14 @@ import {
     Menu,
     X,
     ChefHat,
-    UtensilsCrossed
+    UtensilsCrossed,
+    CalendarCheck,
+    UserCog
 } from 'lucide-react';
 
 const menuItems = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    { name: 'Rezervasyonlar', href: '/admin/reservations', icon: CalendarCheck },
     { name: 'Hero Slider', href: '/admin/slider', icon: ImageIcon },
     { name: 'Ocakbaşı Videoları', href: '/admin/videos', icon: Video },
     { name: 'Menü Yönetimi', href: '/admin/menu', icon: UtensilsCrossed },
@@ -31,12 +35,15 @@ const menuItems = [
     { name: 'Sosyal Sorumluluk', href: '/admin/social', icon: Heart },
     { name: 'Açık Pozisyonlar', href: '/admin/hr/positions', icon: Users },
     { name: 'İş Başvuruları', href: '/admin/hr/applications', icon: FileText },
+    { name: 'Kullanıcı Yönetimi', href: '/admin/users', icon: UserCog },
 ];
 
 export default function AdminLayout({ children }) {
     const router = useRouter();
     const pathname = usePathname();
     const [user, setUser] = useState(null);
+    const [userRole, setUserRole] = useState(null);
+    const [userName, setUserName] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -54,24 +61,57 @@ export default function AdminLayout({ children }) {
 
             if (!session) {
                 router.push('/admin/login');
+                setLoading(false);
             } else {
                 setUser(session.user);
+
+                // Kullanıcı rolünü al (user_id ve email ile)
+                const roleData = await getUserRole(session.user.id, session.user.email);
+                if (roleData) {
+                    setUserRole(roleData.role);
+                    setUserName(roleData.name);
+                } else {
+                    // admin_users tablosunda yoksa varsayılan olarak admin yap (ilk kullanıcı için)
+                    setUserRole('admin');
+                    setUserName(session.user.email?.split('@')[0] || 'Admin');
+                }
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         checkAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_OUT') {
                 router.push('/admin/login');
+                setUserRole(null);
+                setUserName(null);
             } else if (session) {
                 setUser(session.user);
+                const roleData = await getUserRole(session.user.id, session.user.email);
+                if (roleData) {
+                    setUserRole(roleData.role);
+                    setUserName(roleData.name);
+                } else {
+                    // Varsayılan rol
+                    setUserRole('admin');
+                    setUserName(session.user.email?.split('@')[0] || 'Admin');
+                }
             }
         });
 
         return () => subscription.unsubscribe();
     }, [router, isLoginPage]);
+
+    // Sayfa erişim kontrolü
+    useEffect(() => {
+        if (!loading && userRole && !isLoginPage) {
+            if (!hasAccess(userRole, pathname)) {
+                // Yetkisiz sayfaya erişim - dashboard'a yönlendir
+                router.push('/admin');
+            }
+        }
+    }, [pathname, userRole, loading, isLoginPage, router]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -99,6 +139,9 @@ export default function AdminLayout({ children }) {
     if (!user) {
         return null;
     }
+
+    // Menüyü role göre filtrele
+    const visibleMenuItems = menuItems.filter(item => isMenuVisible(item.href, userRole));
 
     return (
         <div className="min-h-screen bg-zinc-950">
@@ -146,7 +189,7 @@ export default function AdminLayout({ children }) {
 
                 {/* Navigation */}
                 <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100%-5rem-4rem)]">
-                    {menuItems.map((item) => {
+                    {visibleMenuItems.map((item) => {
                         const isActive = pathname === item.href;
                         const Icon = item.icon;
 
@@ -175,12 +218,14 @@ export default function AdminLayout({ children }) {
                     <div className="flex items-center gap-3 mb-3 px-2">
                         <div className="w-10 h-10 bg-zinc-700 rounded-full flex items-center justify-center">
                             <span className="text-white font-bold text-sm">
-                                {user?.email?.charAt(0).toUpperCase()}
+                                {userName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
                             </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate">{user?.email}</p>
-                            <p className="text-xs text-zinc-500">Admin</p>
+                            <p className="text-sm text-white truncate">{userName || user?.email}</p>
+                            <p className="text-xs text-zinc-500 capitalize">
+                                {userRole === 'admin' ? '👑 Admin' : '👤 Staff'}
+                            </p>
                         </div>
                     </div>
                     <button
@@ -202,3 +247,4 @@ export default function AdminLayout({ children }) {
         </div>
     );
 }
+

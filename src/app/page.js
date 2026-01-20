@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Navbar from '@/components/Navbar';
 import HeroSlider from '@/components/HeroSlider';
 import AboutSection from '@/components/AboutSection';
 import ReservationSection from '@/components/ReservationSection';
@@ -9,20 +10,20 @@ import PressSection from '@/components/PressSection';
 import SocialResponsibilitySection from '@/components/SocialResponsibilitySection';
 import HRSection from '@/components/HRSection';
 import Footer from '@/components/Footer';
-import MobileNav from '@/components/MobileNav';
 import MenuModal from '@/components/MenuModal';
+import ScrollToTop from '@/components/ScrollToTop';
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Expose function globally for MenuSidebar to call
+  // Expose function globally for Navbar to call
   if (typeof window !== 'undefined') {
     window.openMenuModal = () => setIsMenuOpen(true);
   }
 
   return (
     <main className="w-full overflow-x-hidden">
-      <MobileNav />
+      <Navbar />
       <HeroSlider />
       <AboutSection />
       <ReservationSection />
@@ -33,7 +34,7 @@ export default function Home() {
       <HRSection />
       <Footer />
       <MenuModal isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      <ScrollToTop />
     </main>
   );
 }
-

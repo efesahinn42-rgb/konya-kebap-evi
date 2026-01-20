@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Utensils } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import ScrollDownButton from './ScrollDownButton';
 
 // Fallback data
 const fallbackInitiatives = [
@@ -202,6 +203,9 @@ export default function SocialResponsibilitySection() {
                         ))}
                     </div>
                 </motion.div>
+            </div>
+            <div className="absolute bottom-4 left-0 right-0 z-20">
+                <ScrollDownButton targetId="hr" />
             </div>
         </section>
     );

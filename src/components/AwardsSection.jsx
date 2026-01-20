@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Award, Star, Medal } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import ScrollDownButton from './ScrollDownButton';
 
 // Icon mapping
 const iconMap = {
@@ -208,6 +209,9 @@ export default function AwardsSection() {
                         </div>
                     </motion.div>
                 </motion.div>
+            </div>
+            <div className="absolute bottom-4 left-0 right-0 z-20">
+                <ScrollDownButton targetId="press" light={true} />
             </div>
         </section>
     );

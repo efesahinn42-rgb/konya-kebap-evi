@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Briefcase, GraduationCap, Heart, Clock, Award, Send } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import ScrollDownButton from './ScrollDownButton';
 
 const benefits = [
     {
@@ -375,6 +376,9 @@ export default function HRSection() {
                         </form>
                     )}
                 </motion.div>
+            </div>
+            <div className="absolute bottom-4 left-0 right-0 z-20">
+                <ScrollDownButton targetId="footer" />
             </div>
         </section>
     );

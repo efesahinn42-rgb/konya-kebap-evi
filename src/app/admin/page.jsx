@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getUserRole } from '@/lib/auth';
 import {
     Image as ImageIcon,
     Video,
@@ -11,30 +12,52 @@ import {
     Users,
     FileText,
     TrendingUp,
-    Eye
+    Eye,
+    CalendarCheck
 } from 'lucide-react';
 import Link from 'next/link';
 
-const dashboardCards = [
-    { name: 'Hero Slider', href: '/admin/slider', icon: ImageIcon, color: 'from-blue-500 to-blue-600', table: 'hero_slides' },
-    { name: 'Ocakbaşı Videoları', href: '/admin/videos', icon: Video, color: 'from-purple-500 to-purple-600', table: 'ocakbasi_videos' },
-    { name: 'Galeri', href: '/admin/gallery', icon: Images, color: 'from-green-500 to-green-600', table: 'gallery_items' },
-    { name: 'Ödüllerimiz', href: '/admin/awards', icon: Award, color: 'from-yellow-500 to-yellow-600', table: 'awards' },
-    { name: 'Basında Biz', href: '/admin/press', icon: Newspaper, color: 'from-red-500 to-red-600', table: 'press_items' },
-    { name: 'Sosyal Sorumluluk', href: '/admin/social', icon: Heart, color: 'from-pink-500 to-pink-600', table: 'social_projects' },
-    { name: 'Açık Pozisyonlar', href: '/admin/hr/positions', icon: Users, color: 'from-cyan-500 to-cyan-600', table: 'job_positions' },
-    { name: 'İş Başvuruları', href: '/admin/hr/applications', icon: FileText, color: 'from-orange-500 to-orange-600', table: 'job_applications' },
+// Tüm dashboard kartları
+const allDashboardCards = [
+    { name: 'Hero Slider', href: '/admin/slider', icon: ImageIcon, color: 'from-blue-500 to-blue-600', table: 'hero_slides', roles: ['admin'] },
+    { name: 'Ocakbaşı Videoları', href: '/admin/videos', icon: Video, color: 'from-purple-500 to-purple-600', table: 'ocakbasi_videos', roles: ['admin'] },
+    { name: 'Galeri', href: '/admin/gallery', icon: Images, color: 'from-green-500 to-green-600', table: 'gallery_items', roles: ['admin'] },
+    { name: 'Ödüllerimiz', href: '/admin/awards', icon: Award, color: 'from-yellow-500 to-yellow-600', table: 'awards', roles: ['admin'] },
+    { name: 'Basında Biz', href: '/admin/press', icon: Newspaper, color: 'from-red-500 to-red-600', table: 'press_items', roles: ['admin'] },
+    { name: 'Sosyal Sorumluluk', href: '/admin/social', icon: Heart, color: 'from-pink-500 to-pink-600', table: 'social_projects', roles: ['admin'] },
+    { name: 'Rezervasyonlar', href: '/admin/reservations', icon: CalendarCheck, color: 'from-emerald-500 to-emerald-600', table: 'reservations', roles: ['admin', 'staff'] },
+    { name: 'Açık Pozisyonlar', href: '/admin/hr/positions', icon: Users, color: 'from-cyan-500 to-cyan-600', table: 'job_positions', roles: ['admin'] },
+    { name: 'İş Başvuruları', href: '/admin/hr/applications', icon: FileText, color: 'from-orange-500 to-orange-600', table: 'job_applications', roles: ['admin', 'staff'] },
+];
+
+// Hızlı erişim linkleri
+const allQuickLinks = [
+    { name: 'Siteyi Görüntüle', href: '/', icon: Eye, target: '_blank', roles: ['admin', 'staff'] },
+    { name: 'Slider Düzenle', href: '/admin/slider', icon: ImageIcon, roles: ['admin'] },
+    { name: 'Galeri Ekle', href: '/admin/gallery', icon: Images, roles: ['admin'] },
+    { name: 'Rezervasyonlar', href: '/admin/reservations', icon: CalendarCheck, roles: ['admin', 'staff'] },
+    { name: 'Başvuruları Gör', href: '/admin/hr/applications', icon: FileText, roles: ['admin', 'staff'] },
 ];
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({});
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState('admin');
 
     useEffect(() => {
-        const fetchStats = async () => {
-            const statsData = {};
+        const init = async () => {
+            // Kullanıcı rolünü al
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const roleData = await getUserRole(session.user.id, session.user.email);
+                if (roleData) {
+                    setUserRole(roleData.role);
+                }
+            }
 
-            for (const card of dashboardCards) {
+            // İstatistikleri çek
+            const statsData = {};
+            for (const card of allDashboardCards) {
                 try {
                     const { count, error } = await supabase
                         .from(card.table)
@@ -54,8 +77,12 @@ export default function AdminDashboard() {
             setLoading(false);
         };
 
-        fetchStats();
+        init();
     }, []);
+
+    // Role göre kartları filtrele
+    const dashboardCards = allDashboardCards.filter(card => card.roles.includes(userRole));
+    const quickLinks = allQuickLinks.filter(link => link.roles.includes(userRole));
 
     return (
         <div className="space-y-8">
@@ -111,35 +138,20 @@ export default function AdminDashboard() {
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
                 <h2 className="text-xl font-bold text-white mb-4">Hızlı Erişim</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Link
-                        href="/"
-                        target="_blank"
-                        className="flex items-center gap-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
-                    >
-                        <Eye className="w-5 h-5 text-[#d4af37]" />
-                        <span className="text-white">Siteyi Görüntüle</span>
-                    </Link>
-                    <Link
-                        href="/admin/slider"
-                        className="flex items-center gap-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
-                    >
-                        <ImageIcon className="w-5 h-5 text-[#d4af37]" />
-                        <span className="text-white">Slider Düzenle</span>
-                    </Link>
-                    <Link
-                        href="/admin/gallery"
-                        className="flex items-center gap-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
-                    >
-                        <Images className="w-5 h-5 text-[#d4af37]" />
-                        <span className="text-white">Galeri Ekle</span>
-                    </Link>
-                    <Link
-                        href="/admin/hr/applications"
-                        className="flex items-center gap-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
-                    >
-                        <FileText className="w-5 h-5 text-[#d4af37]" />
-                        <span className="text-white">Başvuruları Gör</span>
-                    </Link>
+                    {quickLinks.map((link) => {
+                        const Icon = link.icon;
+                        return (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                target={link.target || '_self'}
+                                className="flex items-center gap-3 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors"
+                            >
+                                <Icon className="w-5 h-5 text-[#d4af37]" />
+                                <span className="text-white">{link.name}</span>
+                            </Link>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -152,8 +164,10 @@ export default function AdminDashboard() {
                     <div>
                         <h3 className="text-lg font-bold text-white mb-1">Hoş Geldiniz!</h3>
                         <p className="text-zinc-400 text-sm">
-                            Bu panel üzerinden web sitenizin içeriklerini kolayca yönetebilirsiniz.
-                            Sol menüden ilgili bölüme tıklayarak fotoğraf, video ve içerik ekleyebilir veya silebilirsiniz.
+                            {userRole === 'staff'
+                                ? 'Bu panel üzerinden rezervasyonları ve iş başvurularını yönetebilirsiniz.'
+                                : 'Bu panel üzerinden web sitenizin içeriklerini kolayca yönetebilirsiniz. Sol menüden ilgili bölüme tıklayarak fotoğraf, video ve içerik ekleyebilir veya silebilirsiniz.'
+                            }
                         </p>
                     </div>
                 </div>
@@ -161,3 +175,4 @@ export default function AdminDashboard() {
         </div>
     );
 }
+

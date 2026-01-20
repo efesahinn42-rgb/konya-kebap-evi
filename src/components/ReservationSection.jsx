@@ -1,7 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarDays, Clock, Users, Phone, User, CheckCircle, Utensils } from 'lucide-react';
+import { getTodayDate, getMaxDate, VALID_TIMES, formatPhoneDisplay } from '@/lib/validation';
+import ScrollDownButton from './ScrollDownButton';
 
 export default function ReservationSection() {
     const [formData, setFormData] = useState({
@@ -14,21 +16,60 @@ export default function ReservationSection() {
     });
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // Dinamik tarih limitleri
+    const minDate = useMemo(() => getTodayDate(), []);
+    const maxDate = useMemo(() => getMaxDate(), []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+
+        // Telefon için özel formatla
+        if (name === 'phone') {
+            const formatted = formatPhoneDisplay(value);
+            setFormData(prev => ({ ...prev, [name]: formatted }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
+
+        setError(null);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        setError(null);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            const response = await fetch('/api/reservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
 
-        setIsLoading(false);
-        setIsSubmitted(true);
+            const result = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    setError('Çok fazla istek gönderdiniz. Lütfen 5 dakika sonra tekrar deneyin.');
+                } else if (response.status === 400) {
+                    setError(result.details?.join(', ') || 'Lütfen tüm alanları doğru doldurun.');
+                } else {
+                    setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+                }
+                return;
+            }
+
+            setIsSubmitted(true);
+        } catch (err) {
+            console.error('Reservation error:', err);
+            setError('Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const resetForm = () => {
@@ -41,6 +82,7 @@ export default function ReservationSection() {
             notes: ''
         });
         setIsSubmitted(false);
+        setError(null);
     };
 
     return (
@@ -111,126 +153,150 @@ export default function ReservationSection() {
 
                                 {/* Form */}
                                 <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                        {/* Name */}
-                                        <div className="relative">
-                                            <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
-                                                Ad Soyad
-                                            </label>
+                                    {/* Error Message */}
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm"
+                                        >
+                                            {error}
+                                        </motion.div>
+                                    )}
+
+                                    {/* Fieldset - disabled when loading */}
+                                    <fieldset disabled={isLoading} className="disabled:opacity-60">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                                            {/* Name */}
                                             <div className="relative">
-                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                                                <input
-                                                    type="text"
-                                                    name="name"
-                                                    value={formData.name}
+                                                <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
+                                                    Ad Soyad
+                                                </label>
+                                                <div className="relative">
+                                                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                                                    <input
+                                                        type="text"
+                                                        name="name"
+                                                        value={formData.name}
+                                                        onChange={handleChange}
+                                                        required
+                                                        maxLength={50}
+                                                        placeholder="Adınız Soyadınız"
+                                                        className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-zinc-600 focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all disabled:cursor-not-allowed"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Phone */}
+                                            <div className="relative">
+                                                <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
+                                                    Telefon
+                                                </label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                                                    <input
+                                                        type="tel"
+                                                        name="phone"
+                                                        value={formData.phone}
+                                                        onChange={handleChange}
+                                                        required
+                                                        placeholder="0532 XXX XX XX"
+                                                        maxLength={14}
+                                                        className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-zinc-600 focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all disabled:cursor-not-allowed"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Date */}
+                                            <div className="relative">
+                                                <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
+                                                    Tarih
+                                                </label>
+                                                <div className="relative">
+                                                    <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                                                    <input
+                                                        type="date"
+                                                        name="date"
+                                                        value={formData.date}
+                                                        onChange={handleChange}
+                                                        required
+                                                        min={minDate}
+                                                        max={maxDate}
+                                                        className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all disabled:cursor-not-allowed"
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-zinc-600 mt-1">En fazla 30 gün sonrasına kadar</p>
+                                            </div>
+
+                                            {/* Time */}
+                                            <div className="relative">
+                                                <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
+                                                    Saat
+                                                </label>
+                                                <div className="relative">
+                                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                                                    <select
+                                                        name="time"
+                                                        value={formData.time}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all appearance-none cursor-pointer disabled:cursor-not-allowed"
+                                                    >
+                                                        <option value="">Saat Seçin</option>
+                                                        <optgroup label="Öğle">
+                                                            {VALID_TIMES.filter(t => parseInt(t) < 15).map(time => (
+                                                                <option key={time} value={time}>{time}</option>
+                                                            ))}
+                                                        </optgroup>
+                                                        <optgroup label="Akşam">
+                                                            {VALID_TIMES.filter(t => parseInt(t) >= 18).map(time => (
+                                                                <option key={time} value={time}>{time}</option>
+                                                            ))}
+                                                        </optgroup>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {/* Guests */}
+                                            <div className="relative sm:col-span-2">
+                                                <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
+                                                    Kişi Sayısı
+                                                </label>
+                                                <div className="relative">
+                                                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                                                    <select
+                                                        name="guests"
+                                                        value={formData.guests}
+                                                        onChange={handleChange}
+                                                        required
+                                                        className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all appearance-none cursor-pointer disabled:cursor-not-allowed"
+                                                    >
+                                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                                            <option key={num} value={num}>{num} Kişi</option>
+                                                        ))}
+                                                        <option value="10+">10+ Kişi</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {/* Notes */}
+                                            <div className="relative sm:col-span-2">
+                                                <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
+                                                    Özel Notlar (Opsiyonel)
+                                                </label>
+                                                <textarea
+                                                    name="notes"
+                                                    value={formData.notes}
                                                     onChange={handleChange}
-                                                    required
-                                                    placeholder="Adınız Soyadınız"
-                                                    className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-zinc-600 focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all"
+                                                    placeholder="Özel isteklerinizi belirtin..."
+                                                    rows={3}
+                                                    maxLength={200}
+                                                    className="w-full bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all resize-none disabled:cursor-not-allowed"
                                                 />
+                                                <p className="text-xs text-zinc-600 mt-1 text-right">{formData.notes.length}/200</p>
                                             </div>
                                         </div>
-
-                                        {/* Phone */}
-                                        <div className="relative">
-                                            <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
-                                                Telefon
-                                            </label>
-                                            <div className="relative">
-                                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                                                <input
-                                                    type="tel"
-                                                    name="phone"
-                                                    value={formData.phone}
-                                                    onChange={handleChange}
-                                                    required
-                                                    placeholder="0532 XXX XX XX"
-                                                    className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-zinc-600 focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Date */}
-                                        <div className="relative">
-                                            <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
-                                                Tarih
-                                            </label>
-                                            <div className="relative">
-                                                <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                                                <input
-                                                    type="date"
-                                                    name="date"
-                                                    value={formData.date}
-                                                    onChange={handleChange}
-                                                    required
-                                                    className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Time */}
-                                        <div className="relative">
-                                            <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
-                                                Saat
-                                            </label>
-                                            <div className="relative">
-                                                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                                                <select
-                                                    name="time"
-                                                    value={formData.time}
-                                                    onChange={handleChange}
-                                                    required
-                                                    className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all appearance-none cursor-pointer"
-                                                >
-                                                    <option value="">Saat Seçin</option>
-                                                    <option value="12:00">12:00</option>
-                                                    <option value="13:00">13:00</option>
-                                                    <option value="14:00">14:00</option>
-                                                    <option value="18:00">18:00</option>
-                                                    <option value="19:00">19:00</option>
-                                                    <option value="20:00">20:00</option>
-                                                    <option value="21:00">21:00</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {/* Guests */}
-                                        <div className="relative sm:col-span-2">
-                                            <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
-                                                Kişi Sayısı
-                                            </label>
-                                            <div className="relative">
-                                                <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
-                                                <select
-                                                    name="guests"
-                                                    value={formData.guests}
-                                                    onChange={handleChange}
-                                                    required
-                                                    className="w-full bg-zinc-800/50 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all appearance-none cursor-pointer"
-                                                >
-                                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                                                        <option key={num} value={num}>{num} Kişi</option>
-                                                    ))}
-                                                    <option value="10+">10+ Kişi</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {/* Notes */}
-                                        <div className="relative sm:col-span-2">
-                                            <label className="block text-xs text-zinc-500 font-bold tracking-wider uppercase mb-2">
-                                                Özel Notlar (Opsiyonel)
-                                            </label>
-                                            <textarea
-                                                name="notes"
-                                                value={formData.notes}
-                                                onChange={handleChange}
-                                                placeholder="Özel isteklerinizi belirtin..."
-                                                rows={3}
-                                                className="w-full bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:border-[#d4af37]/50 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 transition-all resize-none"
-                                            />
-                                        </div>
-                                    </div>
+                                    </fieldset>
 
                                     {/* Buttons Row */}
                                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -239,8 +305,8 @@ export default function ReservationSection() {
                                             type="submit"
                                             disabled={isLoading}
                                             className="flex-1 py-4 sm:py-5 bg-[#d4af37] hover:bg-[#e5c349] text-black font-black text-sm sm:text-base tracking-wider rounded-xl transition-all shadow-lg shadow-[#d4af37]/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
+                                            whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                                            whileTap={{ scale: isLoading ? 1 : 0.98 }}
                                         >
                                             {isLoading ? (
                                                 <>
@@ -289,13 +355,13 @@ export default function ReservationSection() {
                                     Tebrikler!
                                 </h3>
                                 <p className="text-lg sm:text-xl text-[#d4af37] font-bold mb-2">
-                                    Rezervasyonunuz Alındı
+                                    Rezervasyon Talebiniz Alındı
                                 </p>
                                 <p className="text-zinc-400 max-w-md mx-auto mb-8">
                                     Sayın <span className="text-white font-semibold">{formData.name}</span>,
                                     {' '}<span className="text-[#d4af37]">{formData.date}</span> tarihinde
                                     {' '}<span className="text-[#d4af37]">{formData.time}</span> saatinde
-                                    {' '}<span className="text-[#d4af37]">{formData.guests} kişilik</span> masanız hazırlanacaktır.
+                                    {' '}<span className="text-[#d4af37]">{formData.guests} kişilik</span> rezervasyon talebinizi aldık.
                                 </p>
                                 <p className="text-zinc-500 text-sm mb-8">
                                     Onay için kısa süre içinde sizinle iletişime geçeceğiz.

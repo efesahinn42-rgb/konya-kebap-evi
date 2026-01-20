@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import ScrollDownButton from './ScrollDownButton';
 
 // Fallback data in case database is empty
 const fallbackItems = [
@@ -114,7 +115,7 @@ export default function GallerySection() {
                             transition={{ delay: 0.5 }}
                         >
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-400 to-zinc-600">
-                                Galeri
+                                Misafirlerimiz
                             </span>
                         </motion.h2>
 
@@ -269,6 +270,9 @@ export default function GallerySection() {
                     </>
                 )}
             </AnimatePresence>
+            <div className="absolute bottom-4 left-0 right-0 z-20">
+                <ScrollDownButton targetId="awards" light={true} />
+            </div>
         </section>
     );
 }

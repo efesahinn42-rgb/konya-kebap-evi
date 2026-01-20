@@ -219,5 +219,168 @@ CREATE POLICY "public_read_menu_items" ON menu_items FOR SELECT USING (is_active
 CREATE POLICY "admin_all_menu_items" ON menu_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- =============================================
+-- 12. Rezervasyonlar Tablosu
+-- =============================================
+CREATE TABLE IF NOT EXISTS reservations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    
+    -- Müşteri Bilgileri
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    
+    -- Rezervasyon Detayları
+    date DATE NOT NULL,
+    time TIME NOT NULL,
+    guests TEXT NOT NULL,
+    notes TEXT,
+    
+    -- SMS Durumu
+    sms_sent BOOLEAN DEFAULT false,
+    sms_campaign_id TEXT,
+    sms_sent_at TIMESTAMPTZ,
+    
+    -- Rezervasyon Durumu
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed', 'no_show')),
+    
+    -- Admin Notları
+    admin_notes TEXT,
+    confirmed_by TEXT,
+    confirmed_at TIMESTAMPTZ,
+    
+    -- Metadata
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Rezervasyonlar - RLS DEVRE DIŞI (public erişim için)
+-- NOT: Bu tablo herkese açık insert izni verir
+ALTER TABLE reservations DISABLE ROW LEVEL SECURITY;
+
+-- Rezervasyon updated_at trigger
+CREATE OR REPLACE FUNCTION update_reservation_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS reservation_updated_at ON reservations;
+CREATE TRIGGER reservation_updated_at
+    BEFORE UPDATE ON reservations
+    FOR EACH ROW
+    EXECUTE FUNCTION update_reservation_timestamp();
+
+-- =============================================
+-- 13. Rezervasyon İstatistikleri View'ları
+-- =============================================
+
+-- Bugünün rezervasyonları
+CREATE OR REPLACE VIEW today_reservations AS
+SELECT * FROM reservations 
+WHERE date = CURRENT_DATE
+ORDER BY time ASC;
+
+-- Bu haftanın rezervasyonları
+CREATE OR REPLACE VIEW weekly_reservations AS
+SELECT * FROM reservations 
+WHERE date >= CURRENT_DATE 
+  AND date < CURRENT_DATE + INTERVAL '7 days'
+ORDER BY date ASC, time ASC;
+
+-- Günlük rezervasyon sayısı (son 30 gün)
+CREATE OR REPLACE VIEW daily_reservation_stats AS
+SELECT 
+    date,
+    COUNT(*) as total,
+    COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed,
+    COUNT(*) FILTER (WHERE status = 'pending') as pending,
+    COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled,
+    COUNT(*) FILTER (WHERE status = 'completed') as completed,
+    COUNT(*) FILTER (WHERE status = 'no_show') as no_show
+FROM reservations
+WHERE date >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY date
+ORDER BY date DESC;
+
+-- Saatlik yoğunluk (bugün)
+CREATE OR REPLACE VIEW hourly_availability AS
+SELECT 
+    time,
+    COUNT(*) as reservation_count
+FROM reservations
+WHERE date = CURRENT_DATE
+  AND status IN ('pending', 'confirmed')
+GROUP BY time
+ORDER BY time;
+
+-- =============================================
+-- 14. Admin Kullanıcıları Tablosu (Rol Bazlı Erişim)
+-- =============================================
+CREATE TABLE IF NOT EXISTS admin_users (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT DEFAULT 'staff' CHECK (role IN ('admin', 'staff')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id),
+    UNIQUE(email)
+);
+
+-- Admin Users RLS
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "admin_read_users" ON admin_users;
+DROP POLICY IF EXISTS "admin_write_users" ON admin_users;
+-- Sadece authenticated users okuyabilir (kendi rolünü görmek için)
+CREATE POLICY "admin_read_users" ON admin_users FOR SELECT TO authenticated USING (true);
+-- Sadece admin rolündekiler yazabilir
+CREATE POLICY "admin_write_users" ON admin_users FOR ALL TO authenticated 
+    USING (
+        EXISTS (
+            SELECT 1 FROM admin_users 
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM admin_users 
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    );
+
+-- Admin updated_at trigger
+CREATE OR REPLACE FUNCTION update_admin_user_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS admin_user_updated_at ON admin_users;
+CREATE TRIGGER admin_user_updated_at
+    BEFORE UPDATE ON admin_users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_admin_user_timestamp();
+
+-- =============================================
+-- İLK ADMIN KULLANICI EKLEME (Mevcut kullanıcınızı ekleyin)
+-- =============================================
+-- NOT: Aşağıdaki komutu kendi kullanıcınızla güncellemeniz gerekiyor!
+-- Bu komutu çalıştırmadan önce auth.users tablosundan user_id'nizi alın
+
+-- Örnek: (Kendi bilgilerinizi doldurun)
+-- INSERT INTO admin_users (user_id, email, name, role) VALUES (
+--     'BURAYA_SUPABASE_AUTH_USER_ID',
+--     'admin@example.com',
+--     'Admin Kullanıcı',
+--     'admin'
+-- );
+
+-- =============================================
 -- TAMAMLANDI!
 -- =============================================

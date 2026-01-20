@@ -3,8 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import MenuSidebar from './MenuSidebar';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 export default function HeroSlider() {
     const [slides, setSlides] = useState([]);
@@ -29,13 +28,13 @@ export default function HeroSlider() {
         fetchSlides();
     }, []);
 
-    // Auto-slide every 5 seconds
+    // Auto-slide every 6 seconds
     useEffect(() => {
         if (slides.length <= 1) return;
 
         const interval = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % slides.length);
-        }, 5000);
+        }, 6000);
 
         return () => clearInterval(interval);
     }, [slides.length]);
@@ -48,6 +47,13 @@ export default function HeroSlider() {
         setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
     }, [slides.length]);
 
+    const scrollToContent = () => {
+        const statsSection = document.getElementById('stats');
+        if (statsSection) {
+            statsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     // Default slide if no data
     const defaultSlide = {
         image_url: '/images/slide-one.png',
@@ -57,91 +63,108 @@ export default function HeroSlider() {
     const currentSlide = slides.length > 0 ? slides[currentIndex] : defaultSlide;
 
     return (
-        <section id="hero" className="w-full min-h-screen bg-black flex items-center justify-center py-4 sm:py-6 lg:py-8">
-            <div className="max-w-[1800px] w-full mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 lg:grid-cols-[80%_20%] gap-4 sm:gap-6 lg:gap-8 items-center">
+        <section id="hero" className="relative w-full h-screen overflow-hidden bg-black">
 
-                    {/* Hero Image Card */}
+            {/* Fullscreen Background with Zoom Animation */}
+            {loading ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-black">
+                    <div className="w-16 h-16 border-4 border-[#d4af37]/30 border-t-[#d4af37] rounded-full animate-spin" />
+                </div>
+            ) : (
+                <AnimatePresence mode="wait">
                     <motion.div
-                        className="relative w-full rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(212,175,55,0.2)] border border-[#d4af37]/20 bg-zinc-900"
-                        style={{ aspectRatio: '16 / 10' }}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.8 }}
+                        key={currentIndex}
+                        initial={{ opacity: 0 }}
+                        animate={{
+                            opacity: 1,
+                            scale: [1, 1.03, 1]
+                        }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                            opacity: { duration: 1 },
+                            scale: { duration: 10, ease: 'easeInOut', times: [0, 0.5, 1] }
+                        }}
+                        className="absolute inset-0"
+                        style={{ transformOrigin: 'left center' }}
                     >
-                        {loading ? (
-                            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-                                <div className="w-12 h-12 border-4 border-[#d4af37]/30 border-t-[#d4af37] rounded-full animate-spin" />
-                            </div>
+                        {currentSlide.image_url.startsWith('/') ? (
+                            <Image
+                                src={currentSlide.image_url}
+                                alt={currentSlide.alt_text || 'Konya Kebap Evi'}
+                                fill
+                                priority
+                                className="object-cover object-center"
+                                sizes="100vw"
+                            />
                         ) : (
-                            <AnimatePresence mode="wait">
-                                <motion.div
-                                    key={currentIndex}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.5 }}
-                                    className="absolute inset-0"
-                                >
-                                    {currentSlide.image_url.startsWith('/') ? (
-                                        <Image
-                                            src={currentSlide.image_url}
-                                            alt={currentSlide.alt_text || 'Konya Kebap Evi'}
-                                            fill
-                                            priority
-                                            className="object-contain object-center"
-                                            sizes="(max-width: 1024px) 100vw, 80vw"
-                                        />
-                                    ) : (
-                                        <img
-                                            src={currentSlide.image_url}
-                                            alt={currentSlide.alt_text || 'Konya Kebap Evi'}
-                                            className="w-full h-full object-contain object-center"
-                                        />
-                                    )}
-                                </motion.div>
-                            </AnimatePresence>
-                        )}
-
-                        {/* Navigation Arrows - Only show if more than 1 slide */}
-                        {slides.length > 1 && !loading && (
-                            <>
-                                <button
-                                    onClick={prevSlide}
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-all"
-                                >
-                                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                                </button>
-                                <button
-                                    onClick={nextSlide}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black transition-all"
-                                >
-                                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                                </button>
-
-                                {/* Dots Indicator */}
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-                                    {slides.map((_, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => setCurrentIndex(index)}
-                                            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all ${index === currentIndex
-                                                    ? 'bg-[#d4af37] w-6 sm:w-8'
-                                                    : 'bg-white/40 hover:bg-white/60'
-                                                }`}
-                                        />
-                                    ))}
-                                </div>
-                            </>
+                            <img
+                                src={currentSlide.image_url}
+                                alt={currentSlide.alt_text || 'Konya Kebap Evi'}
+                                className="w-full h-full object-cover object-center"
+                            />
                         )}
                     </motion.div>
+                </AnimatePresence>
+            )}
 
-                    {/* Menu Column */}
-                    <div className="h-full flex items-center justify-center lg:justify-start">
-                        <MenuSidebar />
-                    </div>
-                </div>
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+
+            {/* Content Overlay - Slogan at bottom */}
+            <div className="absolute inset-x-0 bottom-32 flex flex-col items-center text-center px-4">
+                <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                    className="text-lg sm:text-xl lg:text-2xl text-white/90 font-light tracking-[0.3em] uppercase"
+                >
+                    Şehrin Konsept Kebap Restoranı
+                </motion.p>
             </div>
+
+            {/* Navigation Arrows - Only show if more than 1 slide */}
+            {slides.length > 1 && !loading && (
+                <>
+                    <button
+                        onClick={prevSlide}
+                        className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/30 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black hover:border-[#d4af37] transition-all"
+                    >
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                        onClick={nextSlide}
+                        className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/30 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-[#d4af37] hover:text-black hover:border-[#d4af37] transition-all"
+                    >
+                        <ChevronRight className="w-6 h-6" />
+                    </button>
+
+                    {/* Dots Indicator */}
+                    <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex gap-3">
+                        {slides.map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setCurrentIndex(index)}
+                                className={`h-2 rounded-full transition-all duration-300 ${index === currentIndex
+                                    ? 'bg-[#d4af37] w-8'
+                                    : 'bg-white/40 w-2 hover:bg-white/60'
+                                    }`}
+                            />
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {/* Scroll Down Indicator */}
+            <motion.button
+                onClick={scrollToContent}
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white/70 hover:text-[#d4af37] transition-colors"
+                animate={{ y: [0, 10, 0] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+            >
+                <span className="text-xs tracking-[0.3em] uppercase">Keşfet</span>
+                <ChevronDown className="w-6 h-6" />
+            </motion.button>
         </section>
     );
 }
+

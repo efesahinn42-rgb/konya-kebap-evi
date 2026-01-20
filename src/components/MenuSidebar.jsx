@@ -14,7 +14,7 @@ const menuItems = [
     { label: 'HAKKIMIZDA', href: '/#about', isPage: false, icon: Info },
     { label: 'MENÜMÜZ', href: '/menu', isModal: true, icon: UtensilsCrossed },
     { label: 'REZERVASYON', href: '/#reservation', isPage: false, icon: CalendarCheck },
-    { label: 'GALERİ', href: '/#gallery', isPage: false, icon: Images },
+    { label: 'MİSAFİRLERİMİZ', href: '/#gallery', isPage: false, icon: Images },
     { label: 'ÖDÜLLERİMİZ', href: '/#awards', isPage: false, icon: Award },
     { label: 'BASINDA BİZ', href: '/#press', isPage: false, icon: Newspaper },
     { label: 'SOSYAL SORUMLULUK', href: '/#sosyal-sorumluluk', isPage: false, icon: Heart },
