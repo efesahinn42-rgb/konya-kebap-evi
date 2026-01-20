@@ -2,12 +2,16 @@
 import { useEffect, useState } from 'react';
 import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Images, Save, X, Upload, Link as LinkIcon, Filter } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
 export default function GalleryManagement() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [activeCategory, setActiveCategory] = useState('all');
     const [uploadType, setUploadType] = useState('url');
     const [selectedFile, setSelectedFile] = useState(null);
@@ -51,7 +55,7 @@ export default function GalleryManagement() {
             }
 
             if (!imageUrl) {
-                alert('Lütfen bir görsel URL\'si girin veya dosya yükleyin');
+                showError('Lütfen bir görsel URL\'si girin veya dosya yükleyin');
                 setSaving(false);
                 return;
             }
@@ -70,9 +74,10 @@ export default function GalleryManagement() {
             await fetchItems();
             setShowModal(false);
             resetForm();
+            success('Görsel başarıyla eklendi');
         } catch (err) {
             console.error('Error adding item:', err);
-            alert('Görsel eklenirken bir hata oluştu');
+            showError('Görsel eklenirken bir hata oluştu');
         }
         setSaving(false);
     };
@@ -84,19 +89,26 @@ export default function GalleryManagement() {
     };
 
     const handleDeleteItem = async (item) => {
-        if (!confirm('Bu görseli silmek istediğinize emin misiniz?')) return;
+        setDeleteConfirm(item);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm) return;
 
         try {
             const { error } = await supabase
                 .from('gallery_items')
                 .delete()
-                .eq('id', item.id);
+                .eq('id', deleteConfirm.id);
 
             if (error) throw error;
             await fetchItems();
+            success('Görsel başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
-            alert('Görsel silinirken bir hata oluştu');
+            showError('Görsel silinirken bir hata oluştu');
+        } finally {
+            setDeleteConfirm(null);
         }
     };
 

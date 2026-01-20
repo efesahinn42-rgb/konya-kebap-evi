@@ -26,15 +26,159 @@ export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [currentHash, setCurrentHash] = useState('');
+    const [activeSection, setActiveSection] = useState('');
+    const [scrollY, setScrollY] = useState(0);
 
-    // Scroll olduğunda arka plan değiştir
+    // Scroll olduğunda arka plan değiştir ve scroll pozisyonunu takip et
     useEffect(() => {
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
+            const currentScrollY = window.scrollY;
+            setIsScrolled(currentScrollY > 50);
+            setScrollY(currentScrollY);
         };
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        // İlk yüklemede scroll pozisyonunu al
+        if (typeof window !== 'undefined') {
+            setScrollY(window.scrollY);
+        }
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // Intersection Observer ile aktif section'ı tespit et
+    useEffect(() => {
+        if (pathname !== '/') {
+            setActiveSection('');
+            return;
+        }
+
+        const sections = ['about', 'reservation', 'gallery', 'awards', 'press', 'contact', 'stats'];
+        const observers = [];
+        const sectionVisibility = {};
+
+        const handleIntersection = (entries) => {
+            entries.forEach((entry) => {
+                const sectionId = entry.target.id;
+                sectionVisibility[sectionId] = entry.isIntersecting;
+            });
+
+            // En üstteyken (scrollY < 100) aktif section yok
+            const currentScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+            if (currentScrollY < 100) {
+                setActiveSection('');
+                return;
+            }
+
+            // Görünür section'ları bul ve en üstteki olanı seç
+            const visibleSections = sections.filter(id => {
+                const element = document.getElementById(id);
+                if (!element) return false;
+                
+                const rect = element.getBoundingClientRect();
+                const isVisible = rect.top < window.innerHeight * 0.3 && rect.bottom > 0;
+                return isVisible;
+            });
+
+            if (visibleSections.length > 0) {
+                // En üstteki section'ı bul
+                let topSection = visibleSections[0];
+                let topPosition = document.getElementById(topSection)?.getBoundingClientRect().top || Infinity;
+
+                visibleSections.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        const rect = element.getBoundingClientRect();
+                        if (rect.top < topPosition && rect.top >= 0) {
+                            topPosition = rect.top;
+                            topSection = id;
+                        }
+                    }
+                });
+
+                // stats section'ı about içinde olduğu için about'a map et
+                const mappedSection = topSection === 'stats' ? 'about' : topSection;
+                setActiveSection(mappedSection);
+            } else {
+                // Hiç section görünmüyorsa, scroll pozisyonuna göre belirle
+                const scrollY = window.scrollY;
+                if (scrollY < 100) {
+                    setActiveSection('');
+                } else {
+                    // Scroll pozisyonuna göre en yakın section'ı bul
+                    let closestSection = '';
+                    let closestDistance = Infinity;
+
+                    sections.forEach(id => {
+                        const element = document.getElementById(id);
+                        if (element) {
+                            const rect = element.getBoundingClientRect();
+                            const distance = Math.abs(rect.top);
+                            if (distance < closestDistance && rect.top < window.innerHeight) {
+                                closestDistance = distance;
+                                closestSection = id;
+                            }
+                        }
+                    });
+
+                    if (closestSection) {
+                        const mappedSection = closestSection === 'stats' ? 'about' : closestSection;
+                        setActiveSection(mappedSection);
+                    }
+                }
+            }
+        };
+
+        // Her section için observer oluştur
+        sections.forEach(sectionId => {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                const observer = new IntersectionObserver(handleIntersection, {
+                    rootMargin: '-20% 0px -70% 0px',
+                    threshold: 0.1
+                });
+                observer.observe(element);
+                observers.push(observer);
+            }
+        });
+
+        // Scroll event listener ekle (daha hassas kontrol için)
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY < 100) {
+                setActiveSection('');
+                return;
+            }
+
+            const sections = ['about', 'reservation', 'gallery', 'awards', 'press', 'contact', 'stats'];
+            let activeId = '';
+            let minDistance = Infinity;
+
+            sections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    const distance = Math.abs(rect.top - 100); // Navbar yüksekliği + offset
+                    
+                    // Section görünür alanda ve en yakınsa
+                    if (rect.top <= window.innerHeight * 0.3 && rect.bottom > 0 && distance < minDistance) {
+                        minDistance = distance;
+                        activeId = id;
+                    }
+                }
+            });
+
+            if (activeId) {
+                const mappedSection = activeId === 'stats' ? 'about' : activeId;
+                setActiveSection(mappedSection);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        return () => {
+            observers.forEach(observer => observer.disconnect());
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [pathname]);
 
     // Hash durumunu takip et
     useEffect(() => {
@@ -136,6 +280,7 @@ export default function Navbar() {
                 initial={{ y: -100 }}
                 animate={{ y: 0 }}
                 transition={{ duration: 0.5 }}
+                style={{ willChange: 'transform' }}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-16 lg:h-20">
@@ -143,10 +288,28 @@ export default function Navbar() {
                         {/* Desktop Menu - Centered */}
                         <nav className="hidden lg:flex items-center">
                             {menuItems.map((item, index) => {
-                                // Hash linkler için aktif durum kontrolü
-                                const isActive = item.isPage 
-                                    ? pathname === item.href 
-                                    : pathname === '/' && currentHash === item.href;
+                                // Aktif durum kontrolü - scroll pozisyonuna göre
+                                let isActive = false;
+                                
+                                if (item.isPage) {
+                                    // Sayfa linkleri için
+                                    if (item.href === '/') {
+                                        // Ana sayfa: en üstteyken veya aktif section yokken aktif
+                                        isActive = pathname === '/' && (activeSection === '' || scrollY < 100);
+                                    } else {
+                                        // Diğer sayfa linkleri
+                                        isActive = pathname === item.href;
+                                    }
+                                } else {
+                                    // Hash linkler için
+                                    if (pathname === '/') {
+                                        const hashName = item.href.split('#')[1];
+                                        isActive = activeSection === hashName;
+                                    } else {
+                                        isActive = false;
+                                    }
+                                }
+                                
                                 const isLast = index === menuItems.length - 1;
 
                                 const menuItemClass = `
@@ -217,6 +380,8 @@ export default function Navbar() {
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="lg:hidden absolute right-4 w-10 h-10 flex items-center justify-center text-white"
+                            aria-label={mobileMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+                            aria-expanded={mobileMenuOpen}
                         >
                             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                         </button>
@@ -242,44 +407,76 @@ export default function Navbar() {
                         {/* Menu Content */}
                         <div className="relative h-full flex flex-col items-center justify-center">
                             <nav className="flex flex-col items-center gap-6">
-                                {menuItems.map((item, index) => (
-                                    <motion.div
-                                        key={item.label}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                    >
-                                        {item.isPage ? (
-                                            item.href === '/' ? (
-                                                <a
-                                                    href={item.href}
-                                                    onClick={(e) => {
-                                                        handleHomePageClick(e);
-                                                        setMobileMenuOpen(false);
-                                                    }}
-                                                    className="text-xl font-bold tracking-[0.2em] text-white hover:text-[#d4af37] transition-colors"
-                                                >
-                                                    {item.label}
-                                                </a>
+                                {menuItems.map((item, index) => {
+                                    // Mobile menu için aktif durum kontrolü
+                                    let isActive = false;
+                                    
+                                    if (item.isPage) {
+                                        if (item.href === '/') {
+                                            isActive = pathname === '/' && (activeSection === '' || scrollY < 100);
+                                        } else {
+                                            isActive = pathname === item.href;
+                                        }
+                                    } else {
+                                        if (pathname === '/') {
+                                            const hashName = item.href.split('#')[1];
+                                            isActive = activeSection === hashName;
+                                        } else {
+                                            isActive = false;
+                                        }
+                                    }
+
+                                    return (
+                                        <motion.div
+                                            key={item.label}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05 }}
+                                        >
+                                            {item.isPage ? (
+                                                item.href === '/' ? (
+                                                    <a
+                                                        href={item.href}
+                                                        onClick={(e) => {
+                                                            handleHomePageClick(e);
+                                                            setMobileMenuOpen(false);
+                                                        }}
+                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${
+                                                            isActive 
+                                                                ? 'text-[#d4af37] underline decoration-2 underline-offset-4' 
+                                                                : 'text-white hover:text-[#d4af37]'
+                                                        }`}
+                                                    >
+                                                        {item.label}
+                                                    </a>
+                                                ) : (
+                                                    <Link
+                                                        href={item.href}
+                                                        onClick={() => setMobileMenuOpen(false)}
+                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${
+                                                            isActive 
+                                                                ? 'text-[#d4af37] underline decoration-2 underline-offset-4' 
+                                                                : 'text-white hover:text-[#d4af37]'
+                                                        }`}
+                                                    >
+                                                        {item.label}
+                                                    </Link>
+                                                )
                                             ) : (
-                                                <Link
-                                                    href={item.href}
-                                                    onClick={() => setMobileMenuOpen(false)}
-                                                    className="text-xl font-bold tracking-[0.2em] text-white hover:text-[#d4af37] transition-colors"
+                                                <button
+                                                    onClick={() => handleLinkClick(item)}
+                                                    className={`text-xl font-bold tracking-[0.2em] transition-colors ${
+                                                        isActive 
+                                                            ? 'text-[#d4af37] underline decoration-2 underline-offset-4' 
+                                                            : 'text-white hover:text-[#d4af37]'
+                                                    }`}
                                                 >
                                                     {item.label}
-                                                </Link>
-                                            )
-                                        ) : (
-                                            <button
-                                                onClick={() => handleLinkClick(item)}
-                                                className="text-xl font-bold tracking-[0.2em] text-white hover:text-[#d4af37] transition-colors"
-                                            >
-                                                {item.label}
-                                            </button>
-                                        )}
-                                    </motion.div>
-                                ))}
+                                                </button>
+                                            )}
+                                        </motion.div>
+                                    );
+                                })}
                             </nav>
                         </div>
                     </motion.div>

@@ -1,8 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Award, Star, Medal } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useAwards } from '@/hooks/useAwards';
 import ScrollDownButton from './ScrollDownButton';
 
 // Icon mapping
@@ -46,27 +45,7 @@ const fallbackAwards = [
 ];
 
 export default function AwardsSection() {
-    const [awards, setAwards] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchAwards = async () => {
-            const { data, error } = await supabase
-                .from('awards')
-                .select('*')
-                .eq('is_active', true)
-                .order('display_order', { ascending: true });
-
-            if (!error && data && data.length > 0) {
-                setAwards(data);
-            } else {
-                setAwards(fallbackAwards);
-            }
-            setLoading(false);
-        };
-
-        fetchAwards();
-    }, []);
+    const { data: awards = fallbackAwards, isLoading: loading } = useAwards();
 
     const getIcon = (iconName) => {
         return iconMap[iconName] || Trophy;

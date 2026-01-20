@@ -1,8 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Utensils } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useSocialProjects } from '@/hooks/useSocialProjects';
 import ScrollDownButton from './ScrollDownButton';
 
 // Fallback data
@@ -37,48 +36,7 @@ const fallbackStats = [
 ];
 
 export default function SocialResponsibilitySection() {
-    const [initiatives, setInitiatives] = useState([]);
-    const [impactStats, setImpactStats] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            // Fetch social projects
-            const { data: projectsData, error: projectsError } = await supabase
-                .from('social_projects')
-                .select('*')
-                .eq('is_active', true)
-                .order('display_order', { ascending: true });
-
-            // Fetch impact stats
-            const { data: statsData, error: statsError } = await supabase
-                .from('impact_stats')
-                .select('*')
-                .eq('is_active', true)
-                .order('display_order', { ascending: true });
-
-            if (!projectsError && projectsData && projectsData.length > 0) {
-                const projects = projectsData.map(p => ({
-                    title: p.title,
-                    description: p.description,
-                    image: p.image_url
-                }));
-                setInitiatives(projects);
-            } else {
-                setInitiatives(fallbackInitiatives);
-            }
-
-            if (!statsError && statsData && statsData.length > 0) {
-                setImpactStats(statsData);
-            } else {
-                setImpactStats(fallbackStats);
-            }
-
-            setLoading(false);
-        };
-
-        fetchData();
-    }, []);
+    const { initiatives, impactStats, isLoading: loading } = useSocialProjects();
 
     return (
         <section id="sosyal-sorumluluk" className="relative bg-[#0a0a0a] overflow-hidden py-16 sm:py-20 lg:py-28">

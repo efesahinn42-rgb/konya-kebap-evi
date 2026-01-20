@@ -1,4 +1,7 @@
 import './globals.css';
+import { montserrat } from '@/lib/fonts';
+import { ReactQueryProvider } from '@/lib/react-query';
+import { defaultMetadata } from './metadata';
 
 export const viewport = {
   width: 'device-width',
@@ -6,28 +9,18 @@ export const viewport = {
   maximumScale: 5,
 };
 
-export const metadata = {
-  title: 'Konya Kebap Evi | Lezzet Mirası',
-  description: 'Konya Kebap Evi - Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
-  keywords: 'konya kebap evi, etliekmek, kebap, konya mutfağı, restoran, yemek',
-  openGraph: {
-    title: 'Konya Kebap Evi | Lezzet Mirası',
-    description: 'Konya Kebap Evi - Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
-    type: 'website',
-  },
-  icons: {
-    icon: '/logo.png',
-  },
-};
+export const metadata = defaultMetadata;
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="tr">
+    <html lang="tr" data-scroll-behavior="smooth" className={montserrat.variable}>
       <head>
         <link rel="icon" href="/logo.png" />
       </head>
       <body suppressHydrationWarning>
-        {children}
+        <ReactQueryProvider>
+          {children}
+        </ReactQueryProvider>
       </body>
     </html>
   );

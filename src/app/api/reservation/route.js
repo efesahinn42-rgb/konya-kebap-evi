@@ -54,15 +54,49 @@ export async function POST(request) {
         // 5. Send SMS to business (restaurant)
         let businessSmsResult = null;
         let smsError = null;
+        let smsErrorCode = null;
+        
         try {
             businessSmsResult = await sendBusinessSMS({
                 ...data,
                 phone: formattedPhone
             });
+            
+            if (businessSmsResult?.success) {
+                console.log('✅ Business SMS sent successfully:', {
+                    campaignId: businessSmsResult.id?.substring(0, 20),
+                    simulation: businessSmsResult.simulation,
+                    attempt: businessSmsResult.attempt
+                });
+            } else {
+                console.warn('⚠️ Business SMS failed:', businessSmsResult?.reason || 'Unknown error');
+                smsError = businessSmsResult?.reason || 'SMS gönderilemedi';
+            }
         } catch (err) {
-            console.error('Business SMS failed:', err);
-            smsError = err.message;
+            // Enhanced error handling
+            console.error('❌ Business SMS error:', {
+                message: err.message,
+                name: err.name,
+                // Don't log sensitive data
+            });
+            
+            smsError = err.message || 'SMS gönderiminde bir hata oluştu';
+            
+            // Categorize error codes for better handling
+            if (err.message?.includes('Kimlik doğrulama')) {
+                smsErrorCode = 'AUTH_ERROR';
+            } else if (err.message?.includes('Rate limit')) {
+                smsErrorCode = 'RATE_LIMIT';
+            } else if (err.message?.includes('zaman aşımı')) {
+                smsErrorCode = 'TIMEOUT';
+            } else if (err.message?.includes('formatı')) {
+                smsErrorCode = 'FORMAT_ERROR';
+            } else {
+                smsErrorCode = 'SMS_ERROR';
+            }
+            
             // Continue to save reservation even if SMS fails
+            // This is important - reservation should be saved regardless of SMS status
         }
 
         // 6. Save to database
@@ -112,7 +146,9 @@ export async function POST(request) {
             sms: {
                 sent: businessSmsResult?.success || false,
                 simulation: businessSmsResult?.simulation || false,
-                error: smsError
+                error: smsError,
+                errorCode: smsErrorCode,
+                campaignId: businessSmsResult?.id || null
             },
             reservation_id: reservationId
         });

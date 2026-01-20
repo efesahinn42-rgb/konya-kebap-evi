@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Plus, Trash2, Award, Trophy, Star, Medal, Save, X, Edit2 } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
 const iconOptions = [
     { value: 'trophy', label: 'Kupa', Icon: Trophy },
@@ -16,10 +18,12 @@ const getIcon = (iconName) => {
 };
 
 export default function AwardsManagement() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [awards, setAwards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [editingAward, setEditingAward] = useState(null);
     const [formData, setFormData] = useState({
         title: '',
@@ -62,7 +66,7 @@ export default function AwardsManagement() {
 
     const handleSave = async () => {
         if (!formData.title || !formData.year || !formData.organization) {
-            alert('Lütfen zorunlu alanları doldurun');
+            showError('Lütfen zorunlu alanları doldurun');
             return;
         }
 
@@ -86,26 +90,34 @@ export default function AwardsManagement() {
             }
             await fetchAwards();
             setShowModal(false);
+            success(editingAward ? 'Ödül güncellendi' : 'Ödül eklendi');
         } catch (err) {
             console.error('Error saving award:', err);
-            alert('Ödül kaydedilirken bir hata oluştu');
+            showError('Ödül kaydedilirken bir hata oluştu');
         }
         setSaving(false);
     };
 
     const handleDelete = async (award) => {
-        if (!confirm('Bu ödülü silmek istediğinize emin misiniz?')) return;
+        setDeleteConfirm(award);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm) return;
 
         try {
             const { error } = await supabase
                 .from('awards')
                 .delete()
-                .eq('id', award.id);
+                .eq('id', deleteConfirm.id);
             if (error) throw error;
             await fetchAwards();
+            success('Ödül başarıyla silindi');
         } catch (err) {
             console.error('Error deleting award:', err);
-            alert('Ödül silinirken bir hata oluştu');
+            showError('Ödül silinirken bir hata oluştu');
+        } finally {
+            setDeleteConfirm(null);
         }
     };
 

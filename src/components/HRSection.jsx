@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Briefcase, GraduationCap, Heart, Clock, Award, Send, ChevronUp } from 'lucide-react';
+import { useJobPositions } from '@/hooks/useJobPositions';
 import { supabase } from '@/lib/supabase';
 
 const benefits = [
@@ -53,8 +54,7 @@ const fallbackPositions = [
 ];
 
 export default function HRSection() {
-    const [openPositions, setOpenPositions] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { data: openPositions = fallbackPositions, isLoading: loading } = useJobPositions();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -65,26 +65,6 @@ export default function HRSection() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [submitError, setSubmitError] = useState('');
-
-    // Fetch job positions
-    useEffect(() => {
-        const fetchPositions = async () => {
-            const { data, error } = await supabase
-                .from('job_positions')
-                .select('*')
-                .eq('is_active', true)
-                .order('created_at', { ascending: false });
-
-            if (!error && data && data.length > 0) {
-                setOpenPositions(data);
-            } else {
-                setOpenPositions(fallbackPositions);
-            }
-            setLoading(false);
-        };
-
-        fetchPositions();
-    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

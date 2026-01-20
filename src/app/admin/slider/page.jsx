@@ -2,12 +2,16 @@
 import { useEffect, useState } from 'react';
 import { supabase, uploadFile, deleteFile } from '@/lib/supabase';
 import { Plus, Trash2, GripVertical, Image as ImageIcon, Save, X, Upload, Link as LinkIcon } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
 export default function SliderManagement() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [slides, setSlides] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [uploadType, setUploadType] = useState('url'); // 'url' or 'file'
     const [newSlide, setNewSlide] = useState({ image_url: '', alt_text: '' });
     const [selectedFile, setSelectedFile] = useState(null);
@@ -54,7 +58,7 @@ export default function SliderManagement() {
             }
 
             if (!imageUrl) {
-                alert('Lütfen bir görsel URL\'si girin veya dosya yükleyin');
+                showError('Lütfen bir görsel URL\'si girin veya dosya yükleyin');
                 setSaving(false);
                 return;
             }
@@ -75,17 +79,18 @@ export default function SliderManagement() {
             setNewSlide({ image_url: '', alt_text: '' });
             setSelectedFile(null);
             setPreviewUrl('');
+            success('Görsel başarıyla eklendi');
         } catch (err) {
             console.error('Error adding slide:', err);
             const errorMsg = err?.message || 'Bilinmeyen hata';
             if (errorMsg.includes('Bucket not found')) {
-                alert('HATA: Supabase Storage bucket "hero-slides" bulunamadı.\n\nSupabase Dashboard → Storage → New Bucket → "hero-slides" adında public bucket oluşturun.');
+                showError('Supabase Storage bucket "hero-slides" bulunamadı. Lütfen Supabase Dashboard\'dan bucket oluşturun.');
             } else if (errorMsg.includes('new row violates row-level security')) {
-                alert('HATA: Storage izinleri eksik.\n\nSupabase Dashboard → Storage → hero-slides → Policies → Enable RLS and add policies.');
+                showError('Storage izinleri eksik. Lütfen RLS policy ayarlarını kontrol edin.');
             } else if (errorMsg.includes('Payload too large')) {
-                alert('HATA: Dosya boyutu çok büyük.\n\nLütfen daha küçük bir dosya seçin (max 50MB).');
+                showError('Dosya boyutu çok büyük. Lütfen daha küçük bir dosya seçin (max 50MB).');
             } else {
-                alert(`Görsel eklenirken hata oluştu:\n${errorMsg}`);
+                showError(`Görsel eklenirken hata oluştu: ${errorMsg}`);
             }
         }
         setSaving(false);
@@ -93,25 +98,32 @@ export default function SliderManagement() {
 
     // Delete slide
     const handleDeleteSlide = async (slide) => {
-        if (!confirm('Bu görseli silmek istediğinize emin misiniz?')) return;
+        setDeleteConfirm(slide);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm) return;
 
         try {
             // Delete from storage if it's a Supabase URL
-            if (slide.image_url.includes('supabase')) {
-                const path = slide.image_url.split('/').pop();
+            if (deleteConfirm.image_url.includes('supabase')) {
+                const path = deleteConfirm.image_url.split('/').pop();
                 await deleteFile('hero-slides', path);
             }
 
             const { error } = await supabase
                 .from('hero_slides')
                 .delete()
-                .eq('id', slide.id);
+                .eq('id', deleteConfirm.id);
 
             if (error) throw error;
             await fetchSlides();
+            success('Görsel başarıyla silindi');
         } catch (err) {
             console.error('Error deleting slide:', err);
-            alert('Görsel silinirken bir hata oluştu');
+            showError('Görsel silinirken bir hata oluştu');
+        } finally {
+            setDeleteConfirm(null);
         }
     };
 

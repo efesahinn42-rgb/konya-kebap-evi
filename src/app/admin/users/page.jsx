@@ -4,13 +4,17 @@ import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 import {
     Users, UserPlus, Shield, User, Trash2,
-    RefreshCw, Crown, Mail, Calendar
+    RefreshCw, Crown, Mail, Calendar, CheckCircle, XCircle
 } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
 export default function UsersPage() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [newUser, setNewUser] = useState({ email: '', name: '', role: 'staff' });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
@@ -89,10 +93,12 @@ export default function UsersPage() {
             setShowAddModal(false);
             setNewUser({ email: '', name: '', role: 'staff' });
             fetchUsers();
-            alert('Kullanıcıya davet e-postası gönderildi!');
+            success('Kullanıcıya davet e-postası gönderildi!');
         } catch (err) {
             console.error('Error adding user:', err);
-            setError(err.message || 'Kullanıcı eklenirken hata oluştu');
+            const errorMsg = err.message || 'Kullanıcı eklenirken hata oluştu';
+            setError(errorMsg);
+            showError(errorMsg);
         } finally {
             setSaving(false);
         }
@@ -109,27 +115,34 @@ export default function UsersPage() {
 
             if (error) throw error;
             fetchUsers();
+            success('Kullanıcı rolü güncellendi');
         } catch (err) {
             console.error('Error updating role:', err);
-            alert('Rol güncellenirken hata oluştu');
+            showError('Rol güncellenirken hata oluştu');
         }
     };
 
     const deleteUser = async (id) => {
-        if (!supabase) return;
-        if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
+        setDeleteConfirm(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm || !supabase) return;
 
         try {
             const { error } = await supabase
                 .from('admin_users')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteConfirm);
 
             if (error) throw error;
             fetchUsers();
+            success('Kullanıcı başarıyla silindi');
         } catch (err) {
             console.error('Error deleting user:', err);
-            alert('Kullanıcı silinirken hata oluştu');
+            showError('Kullanıcı silinirken hata oluştu');
+        } finally {
+            setDeleteConfirm(null);
         }
     };
 
@@ -326,6 +339,21 @@ export default function UsersPage() {
                     </motion.div>
                 </div>
             )}
+
+            {/* Toast Container */}
+            <ToastContainer />
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                onConfirm={confirmDelete}
+                title="Kullanıcıyı Sil"
+                message="Bu kullanıcıyı silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+                confirmText="Evet, Sil"
+                cancelText="İptal"
+                type="danger"
+            />
         </div>
     );
 }

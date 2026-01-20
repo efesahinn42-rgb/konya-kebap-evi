@@ -2,14 +2,19 @@
 import { useEffect, useState } from 'react';
 import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Heart, Save, X, Edit2, Upload, Link as LinkIcon } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
 export default function SocialManagement() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [projects, setProjects] = useState([]);
     const [stats, setStats] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showStatsModal, setShowStatsModal] = useState(false);
+    const [deleteProjectConfirm, setDeleteProjectConfirm] = useState(null);
+    const [deleteStatConfirm, setDeleteStatConfirm] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
     const [uploadType, setUploadType] = useState('url');
     const [selectedFile, setSelectedFile] = useState(null);
@@ -67,7 +72,7 @@ export default function SocialManagement() {
 
     const handleSaveProject = async () => {
         if (!formData.title || !formData.description) {
-            alert('Lütfen başlık ve açıklama girin');
+            showError('Lütfen başlık ve açıklama girin');
             return;
         }
 
@@ -81,7 +86,7 @@ export default function SocialManagement() {
             }
 
             if (!imageUrl) {
-                alert('Lütfen bir görsel ekleyin');
+                showError('Lütfen bir görsel ekleyin');
                 setSaving(false);
                 return;
             }
@@ -99,16 +104,17 @@ export default function SocialManagement() {
             setShowModal(false);
             setSelectedFile(null);
             setPreviewUrl('');
+            success(editingItem ? 'Proje güncellendi' : 'Proje eklendi');
         } catch (err) {
             console.error('Error saving project:', err);
-            alert('Kaydetme sırasında bir hata oluştu');
+            showError('Kaydetme sırasında bir hata oluştu');
         }
         setSaving(false);
     };
 
     const handleSaveStat = async () => {
         if (!statFormData.number || !statFormData.label) {
-            alert('Lütfen tüm alanları doldurun');
+            showError('Lütfen tüm alanları doldurun');
             return;
         }
 
@@ -123,32 +129,49 @@ export default function SocialManagement() {
             }
             await fetchData();
             setShowStatsModal(false);
+            success(editingStat ? 'İstatistik güncellendi' : 'İstatistik eklendi');
         } catch (err) {
             console.error('Error saving stat:', err);
-            alert('Kaydetme sırasında bir hata oluştu');
+            showError('Kaydetme sırasında bir hata oluştu');
         }
         setSaving(false);
     };
 
     const handleDeleteProject = async (item) => {
-        if (!confirm('Bu projeyi silmek istediğinize emin misiniz?')) return;
+        setDeleteProjectConfirm(item);
+    };
+
+    const confirmDeleteProject = async () => {
+        if (!deleteProjectConfirm) return;
         try {
-            const { error } = await supabase.from('social_projects').delete().eq('id', item.id);
+            const { error } = await supabase.from('social_projects').delete().eq('id', deleteProjectConfirm.id);
             if (error) throw error;
             await fetchData();
+            success('Proje başarıyla silindi');
         } catch (err) {
             console.error('Error deleting project:', err);
+            showError('Proje silinirken bir hata oluştu');
+        } finally {
+            setDeleteProjectConfirm(null);
         }
     };
 
     const handleDeleteStat = async (stat) => {
-        if (!confirm('Bu istatistiği silmek istediğinize emin misiniz?')) return;
+        setDeleteStatConfirm(stat);
+    };
+
+    const confirmDeleteStat = async () => {
+        if (!deleteStatConfirm) return;
         try {
-            const { error } = await supabase.from('impact_stats').delete().eq('id', stat.id);
+            const { error } = await supabase.from('impact_stats').delete().eq('id', deleteStatConfirm.id);
             if (error) throw error;
             await fetchData();
+            success('İstatistik başarıyla silindi');
         } catch (err) {
             console.error('Error deleting stat:', err);
+            showError('İstatistik silinirken bir hata oluştu');
+        } finally {
+            setDeleteStatConfirm(null);
         }
     };
 
@@ -331,6 +354,33 @@ export default function SocialManagement() {
                     </div>
                 </div>
             )}
+
+            {/* Toast Container */}
+            <ToastContainer />
+
+            {/* Delete Project Confirmation */}
+            <ConfirmDialog
+                isOpen={!!deleteProjectConfirm}
+                onClose={() => setDeleteProjectConfirm(null)}
+                onConfirm={confirmDeleteProject}
+                title="Projeyi Sil"
+                message={`"${deleteProjectConfirm?.title}" adlı projeyi silmek istediğinize emin misiniz?`}
+                confirmText="Evet, Sil"
+                cancelText="İptal"
+                type="danger"
+            />
+
+            {/* Delete Stat Confirmation */}
+            <ConfirmDialog
+                isOpen={!!deleteStatConfirm}
+                onClose={() => setDeleteStatConfirm(null)}
+                onConfirm={confirmDeleteStat}
+                title="İstatistiği Sil"
+                message={`"${deleteStatConfirm?.label}" adlı istatistiği silmek istediğinize emin misiniz?`}
+                confirmText="Evet, Sil"
+                cancelText="İptal"
+                type="danger"
+            />
         </div>
     );
 }

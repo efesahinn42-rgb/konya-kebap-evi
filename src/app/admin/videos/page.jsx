@@ -2,15 +2,21 @@
 import { useEffect, useState } from 'react';
 import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Video, Save, X, Link as LinkIcon, Play, Upload } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { validateYouTubeURL } from '@/lib/validations';
 
 export default function VideosManagement() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [videos, setVideos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [uploadType, setUploadType] = useState('url'); // 'url' or 'file'
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
+    const [urlError, setUrlError] = useState('');
     const [newVideo, setNewVideo] = useState({
         title: '',
         video_url: '',
@@ -29,7 +35,9 @@ export default function VideosManagement() {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (!error) setVideos(data || []);
+        if (!error && data) {
+            setVideos(data || []);
+        }
         setLoading(false);
     };
 
@@ -43,6 +51,15 @@ export default function VideosManagement() {
     };
 
     const handleAddVideo = async () => {
+        // Validate YouTube URL if URL type
+        if (uploadType === 'url' && newVideo.video_url) {
+            if (!validateYouTubeURL(newVideo.video_url)) {
+                setUrlError('Geçerli bir YouTube URL\'si girin (örn: https://www.youtube.com/embed/xxxx veya https://youtu.be/xxxx)');
+                return;
+            }
+            setUrlError('');
+        }
+
         setSaving(true);
         try {
             let videoUrl = newVideo.video_url;
@@ -54,7 +71,7 @@ export default function VideosManagement() {
             }
 
             if (!newVideo.title || !videoUrl) {
-                alert('Lütfen başlık ve video URL\'si girin veya dosya yükleyin');
+                showError('Lütfen başlık ve video URL\'si girin veya dosya yükleyin');
                 setSaving(false);
                 return;
             }
@@ -74,13 +91,14 @@ export default function VideosManagement() {
             await fetchVideos();
             setShowModal(false);
             resetForm();
+            success('Video başarıyla eklendi');
         } catch (err) {
             console.error('Error adding video:', err);
             const errorMsg = err?.message || 'Bilinmeyen hata';
             if (errorMsg.includes('Bucket not found')) {
-                alert('HATA: Supabase Storage bucket "ocakbasi-videos" bulunamadı.\n\nSupabase Dashboard → Storage → New Bucket → "ocakbasi-videos" adında public bucket oluşturun.');
+                showError('Supabase Storage bucket "ocakbasi-videos" bulunamadı. Lütfen Supabase Dashboard\'dan bucket oluşturun.');
             } else {
-                alert(`Video eklenirken hata oluştu:\n${errorMsg}`);
+                showError(`Video eklenirken hata oluştu: ${errorMsg}`);
             }
         }
         setSaving(false);
@@ -91,22 +109,30 @@ export default function VideosManagement() {
         setSelectedFile(null);
         setPreviewUrl('');
         setUploadType('url');
+        setUrlError('');
     };
 
     const handleDeleteVideo = async (video) => {
-        if (!confirm('Bu videoyu silmek istediğinize emin misiniz?')) return;
+        setDeleteConfirm(video);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm) return;
 
         try {
             const { error } = await supabase
                 .from('ocakbasi_videos')
                 .delete()
-                .eq('id', video.id);
+                .eq('id', deleteConfirm.id);
 
             if (error) throw error;
             await fetchVideos();
+            success('Video başarıyla silindi');
         } catch (err) {
             console.error('Error deleting video:', err);
-            alert('Video silinirken bir hata oluştu');
+            showError('Video silinirken bir hata oluştu');
+        } finally {
+            setDeleteConfirm(null);
         }
     };
 
@@ -335,16 +361,31 @@ export default function VideosManagement() {
                             {uploadType === 'url' && (
                                 <div>
                                     <label className="block text-sm font-medium text-zinc-400 mb-2">
-                                        Video URL (YouTube)
+                                        Video URL (YouTube) *
                                     </label>
                                     <input
                                         type="url"
                                         value={newVideo.video_url}
-                                        onChange={(e) => setNewVideo({ ...newVideo, video_url: e.target.value })}
-                                        placeholder="https://www.youtube.com/embed/xxxx"
-                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]"
+                                        onChange={(e) => {
+                                            setNewVideo({ ...newVideo, video_url: e.target.value });
+                                            setUrlError('');
+                                        }}
+                                        onBlur={() => {
+                                            if (newVideo.video_url && !validateYouTubeURL(newVideo.video_url)) {
+                                                setUrlError('Geçerli bir YouTube URL\'si girin');
+                                            } else {
+                                                setUrlError('');
+                                            }
+                                        }}
+                                        placeholder="https://www.youtube.com/embed/xxxx veya https://youtu.be/xxxx"
+                                        className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${
+                                            urlError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
+                                        }`}
                                     />
-                                    <p className="text-zinc-500 text-xs mt-1">YouTube embed URL'si kullanın</p>
+                                    {urlError && (
+                                        <p className="text-red-400 text-xs mt-1">{urlError}</p>
+                                    )}
+                                    <p className="text-zinc-500 text-xs mt-1">YouTube embed URL'si veya youtu.be linki kullanın</p>
                                 </div>
                             )}
 
@@ -429,7 +470,7 @@ export default function VideosManagement() {
                             </button>
                             <button
                                 onClick={handleAddVideo}
-                                disabled={saving || !newVideo.title || (uploadType === 'url' && !newVideo.video_url) || (uploadType === 'file' && !selectedFile)}
+                                disabled={saving || !newVideo.title || (uploadType === 'url' && (!newVideo.video_url || urlError)) || (uploadType === 'file' && !selectedFile)}
                                 className="px-6 py-2.5 bg-[#d4af37] text-black font-bold rounded-xl hover:bg-[#e5c349] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {saving ? (
@@ -451,6 +492,21 @@ export default function VideosManagement() {
                     </div>
                 </div>
             )}
+
+            {/* Toast Container */}
+            <ToastContainer />
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                onConfirm={confirmDelete}
+                title="Videoyu Sil"
+                message={`"${deleteConfirm?.title}" adlı videoyu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+                confirmText="Evet, Sil"
+                cancelText="İptal"
+                type="danger"
+            />
         </div>
     );
 }

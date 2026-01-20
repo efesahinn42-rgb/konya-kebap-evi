@@ -13,7 +13,8 @@ import {
     FileText,
     TrendingUp,
     Eye,
-    CalendarCheck
+    CalendarCheck,
+    Clock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -43,13 +44,17 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState({});
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState('admin');
+    const [recentReservations, setRecentReservations] = useState([]);
+    const [recentApplications, setRecentApplications] = useState([]);
 
     useEffect(() => {
         const init = async () => {
+            let roleData = null; // Erişilebilir hale getir
+            
             // Kullanıcı rolünü al
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                const roleData = await getUserRole(session.user.id, session.user.email);
+                roleData = await getUserRole(session.user.id, session.user.email);
                 if (roleData) {
                     setUserRole(roleData.role);
                 }
@@ -74,6 +79,26 @@ export default function AdminDashboard() {
             }
 
             setStats(statsData);
+
+            // Son aktiviteler (Staff için)
+            if (roleData?.role === 'staff' || userRole === 'staff') {
+                // Son rezervasyonlar
+                const { data: reservations } = await supabase
+                    .from('reservations')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+                setRecentReservations(reservations || []);
+
+                // Son başvurular
+                const { data: applications } = await supabase
+                    .from('job_applications')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+                setRecentApplications(applications || []);
+            }
+
             setLoading(false);
         };
 
@@ -154,6 +179,71 @@ export default function AdminDashboard() {
                     })}
                 </div>
             </div>
+
+            {/* Recent Activities for Staff */}
+            {userRole === 'staff' && (recentReservations.length > 0 || recentApplications.length > 0) && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Recent Reservations */}
+                    {recentReservations.length > 0 && (
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <CalendarCheck className="w-5 h-5 text-[#d4af37]" />
+                                <h2 className="text-xl font-bold text-white">Son Rezervasyonlar</h2>
+                            </div>
+                            <div className="space-y-3">
+                                {recentReservations.map((res) => (
+                                    <Link
+                                        key={res.id}
+                                        href="/admin/reservations"
+                                        className="block p-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-white font-medium">{res.name}</p>
+                                                <p className="text-zinc-400 text-sm">{res.date} - {res.time}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-zinc-500 text-xs">
+                                                <Clock className="w-3 h-3" />
+                                                {new Date(res.created_at).toLocaleDateString('tr-TR')}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Recent Applications */}
+                    {recentApplications.length > 0 && (
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+                            <div className="flex items-center gap-2 mb-4">
+                                <FileText className="w-5 h-5 text-[#d4af37]" />
+                                <h2 className="text-xl font-bold text-white">Son Başvurular</h2>
+                            </div>
+                            <div className="space-y-3">
+                                {recentApplications.map((app) => (
+                                    <Link
+                                        key={app.id}
+                                        href="/admin/hr/applications"
+                                        className="block p-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-white font-medium">{app.full_name}</p>
+                                                <p className="text-zinc-400 text-sm">{app.position_title || 'Genel Başvuru'}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-zinc-500 text-xs">
+                                                <Clock className="w-3 h-3" />
+                                                {new Date(app.created_at).toLocaleDateString('tr-TR')}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Info Box */}
             <div className="bg-gradient-to-r from-[#d4af37]/10 to-[#b8962e]/10 border border-[#d4af37]/30 rounded-2xl p-6">

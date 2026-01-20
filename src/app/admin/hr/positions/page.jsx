@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Plus, Trash2, Users, Save, X, Edit2, MapPin, Briefcase } from 'lucide-react';
+import { Plus, Trash2, Users, Save, X, Edit2, MapPin, Briefcase, FileText } from 'lucide-react';
 
 export default function PositionsManagement() {
     const [positions, setPositions] = useState([]);
@@ -26,7 +26,23 @@ export default function PositionsManagement() {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (!error) setPositions(data || []);
+        if (!error) {
+            // Get application counts for each position
+            const positionsWithCounts = await Promise.all(
+                (data || []).map(async (position) => {
+                    const { count } = await supabase
+                        .from('job_applications')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('position_id', position.id);
+                    
+                    return {
+                        ...position,
+                        application_count: count || 0
+                    };
+                })
+            );
+            setPositions(positionsWithCounts);
+        }
         setLoading(false);
     };
 
@@ -63,7 +79,10 @@ export default function PositionsManagement() {
             } else {
                 const { error } = await supabase
                     .from('job_positions')
-                    .insert({ ...formData, is_active: true });
+                    .insert({ 
+                        ...formData, 
+                        is_active: true 
+                    });
                 if (error) throw error;
             }
             await fetchPositions();
@@ -162,6 +181,10 @@ export default function PositionsManagement() {
                                         <span className="flex items-center gap-1">
                                             <MapPin className="w-4 h-4" />
                                             {position.location}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <FileText className="w-4 h-4" />
+                                            {position.application_count || 0} başvuru
                                         </span>
                                     </div>
                                     {position.description && (

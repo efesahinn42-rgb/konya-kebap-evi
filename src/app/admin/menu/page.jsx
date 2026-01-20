@@ -2,15 +2,22 @@
 import { useEffect, useState } from 'react';
 import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Save, X, Edit2, UtensilsCrossed, ChevronRight, ArrowLeft, Upload, Link as LinkIcon } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { validatePrice } from '@/lib/validations';
 
 const emojiOptions = ['🍜', '🫓', '🍖', '🍰', '🥤', '🍽️', '🥗', '🍕', '🍝', '🥘', '🍳', '☕'];
 
 export default function MenuManagement() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [categories, setCategories] = useState([]);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState(null);
+    const [deleteItemConfirm, setDeleteItemConfirm] = useState(null);
+    const [priceError, setPriceError] = useState('');
 
     // Modal states
     const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -71,7 +78,7 @@ export default function MenuManagement() {
 
     const saveCategory = async () => {
         if (!categoryForm.title) {
-            alert('Lütfen kategori adını girin');
+            showError('Lütfen kategori adını girin');
             return;
         }
 
@@ -95,31 +102,39 @@ export default function MenuManagement() {
             }
             await fetchCategories();
             setShowCategoryModal(false);
+            success(editingCategory ? 'Kategori güncellendi' : 'Kategori eklendi');
         } catch (err) {
             console.error('Error saving category:', err);
-            alert('Kategori kaydedilirken bir hata oluştu');
+            showError('Kategori kaydedilirken bir hata oluştu');
         }
         setSaving(false);
     };
 
     const deleteCategory = async (category) => {
-        if (!confirm(`"${category.title}" kategorisini ve içindeki tüm yemekleri silmek istediğinize emin misiniz?`)) return;
+        setDeleteCategoryConfirm(category);
+    };
+
+    const confirmDeleteCategory = async () => {
+        if (!deleteCategoryConfirm) return;
 
         try {
             const { error } = await supabase
                 .from('menu_categories')
                 .delete()
-                .eq('id', category.id);
+                .eq('id', deleteCategoryConfirm.id);
             if (error) throw error;
 
-            if (selectedCategory?.id === category.id) {
+            if (selectedCategory?.id === deleteCategoryConfirm.id) {
                 setSelectedCategory(null);
                 setItems([]);
             }
             await fetchCategories();
+            success('Kategori ve içindeki tüm yemekler silindi');
         } catch (err) {
             console.error('Error deleting category:', err);
-            alert('Kategori silinirken bir hata oluştu');
+            showError('Kategori silinirken bir hata oluştu');
+        } finally {
+            setDeleteCategoryConfirm(null);
         }
     };
 
@@ -166,8 +181,15 @@ export default function MenuManagement() {
     };
 
     const saveItem = async () => {
+        // Validate price
+        if (itemForm.price && !validatePrice(itemForm.price)) {
+            setPriceError('Geçerli bir fiyat girin (örn: 99.99)');
+            return;
+        }
+        setPriceError('');
+
         if (!itemForm.name || !itemForm.price) {
-            alert('Lütfen yemek adı ve fiyatını girin');
+            showError('Lütfen yemek adı ve fiyatını girin');
             return;
         }
 
@@ -206,33 +228,41 @@ export default function MenuManagement() {
             }
             await fetchItems(selectedCategory.id);
             setShowItemModal(false);
+            success(editingItem ? 'Yemek güncellendi' : 'Yemek eklendi');
         } catch (err) {
             console.error('Error saving item:', err);
             const msg = err?.message || 'Bilinmeyen hata';
             if (msg.includes('Bucket not found') || msg.includes('The resource was not found')) {
-                alert('HATA: "menu-images" adında bir Storage Bucket bulunamadı.\n\nLütfen Supabase panelinden Storage kısmına gidip "menu-images" adında public bir bucket oluşturun.');
+                showError('"menu-images" adında bir Storage Bucket bulunamadı. Lütfen Supabase panelinden bucket oluşturun.');
             } else if (msg.includes('row-level security') || msg.includes('violates new row')) {
-                alert('HATA: Yetki sorunu.\n\nStorage bucket için RLS policy ayarlarının yapıldığından emin olun.');
+                showError('Yetki sorunu. Storage bucket için RLS policy ayarlarını kontrol edin.');
             } else {
-                alert(`Yemek kaydedilirken hata oluştu: ${msg}`);
+                showError(`Yemek kaydedilirken hata oluştu: ${msg}`);
             }
         }
         setSaving(false);
     };
 
     const deleteItem = async (item) => {
-        if (!confirm(`"${item.name}" yemeğini silmek istediğinize emin misiniz?`)) return;
+        setDeleteItemConfirm(item);
+    };
+
+    const confirmDeleteItem = async () => {
+        if (!deleteItemConfirm) return;
 
         try {
             const { error } = await supabase
                 .from('menu_items')
                 .delete()
-                .eq('id', item.id);
+                .eq('id', deleteItemConfirm.id);
             if (error) throw error;
             await fetchItems(selectedCategory.id);
+            success('Yemek başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
-            alert('Yemek silinirken bir hata oluştu');
+            showError('Yemek silinirken bir hata oluştu');
+        } finally {
+            setDeleteItemConfirm(null);
         }
     };
 
@@ -644,6 +674,33 @@ export default function MenuManagement() {
                     </div>
                 </div>
             )}
+
+            {/* Toast Container */}
+            <ToastContainer />
+
+            {/* Delete Category Confirmation */}
+            <ConfirmDialog
+                isOpen={!!deleteCategoryConfirm}
+                onClose={() => setDeleteCategoryConfirm(null)}
+                onConfirm={confirmDeleteCategory}
+                title="Kategoriyi Sil"
+                message={`"${deleteCategoryConfirm?.title}" kategorisini ve içindeki tüm yemekleri silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+                confirmText="Evet, Sil"
+                cancelText="İptal"
+                type="danger"
+            />
+
+            {/* Delete Item Confirmation */}
+            <ConfirmDialog
+                isOpen={!!deleteItemConfirm}
+                onClose={() => setDeleteItemConfirm(null)}
+                onConfirm={confirmDeleteItem}
+                title="Yemeği Sil"
+                message={`"${deleteItemConfirm?.name}" yemeğini silmek istediğinize emin misiniz?`}
+                confirmText="Evet, Sil"
+                cancelText="İptal"
+                type="danger"
+            />
         </div>
     );
 }

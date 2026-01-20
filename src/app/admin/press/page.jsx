@@ -2,16 +2,22 @@
 import { useEffect, useState } from 'react';
 import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Newspaper, Save, X, Edit2, Upload, Link as LinkIcon, ExternalLink } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
+import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { validateDate } from '@/lib/validations';
 
 export default function PressManagement() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
     const [uploadType, setUploadType] = useState('url');
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
+    const [dateError, setDateError] = useState('');
     const [formData, setFormData] = useState({
         outlet: '',
         title: '',
@@ -71,8 +77,15 @@ export default function PressManagement() {
     };
 
     const handleSave = async () => {
+        // Validate date
+        if (formData.date && !validateDate(formData.date)) {
+            setDateError('Geçerli bir tarih girin');
+            return;
+        }
+        setDateError('');
+
         if (!formData.outlet || !formData.title || !formData.date) {
-            alert('Lütfen zorunlu alanları doldurun');
+            showError('Lütfen zorunlu alanları doldurun');
             return;
         }
 
@@ -112,25 +125,35 @@ export default function PressManagement() {
             await fetchItems();
             setShowModal(false);
             resetForm();
+            success(editingItem ? 'İçerik güncellendi' : 'İçerik eklendi');
         } catch (err) {
             console.error('Error saving item:', err);
-            alert('Kaydetme sırasında bir hata oluştu');
+            showError('Kaydetme sırasında bir hata oluştu');
         }
         setSaving(false);
     };
 
     const handleDelete = async (item) => {
-        if (!confirm('Bu basın içeriğini silmek istediğinize emin misiniz?')) return;
+        setDeleteConfirm(item);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm) return;
 
         try {
             const { error } = await supabase
                 .from('press_items')
                 .delete()
-                .eq('id', item.id);
+                .eq('id', deleteConfirm.id);
+
             if (error) throw error;
             await fetchItems();
+            success('İçerik başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
+            showError('Silme işlemi başarısız');
+        } finally {
+            setDeleteConfirm(null);
         }
     };
 
@@ -336,10 +359,25 @@ export default function PressManagement() {
                                 <input
                                     type="text"
                                     value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, date: e.target.value });
+                                        setDateError('');
+                                    }}
+                                    onBlur={() => {
+                                        if (formData.date && !validateDate(formData.date)) {
+                                            setDateError('Geçerli bir tarih formatı girin (örn: Ocak 2024)');
+                                        } else {
+                                            setDateError('');
+                                        }
+                                    }}
                                     placeholder="Ocak 2024"
-                                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]"
+                                    className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${
+                                        dateError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
+                                    }`}
                                 />
+                                {dateError && (
+                                    <p className="text-red-400 text-xs mt-1">{dateError}</p>
+                                )}
                             </div>
 
                             <div>
@@ -434,6 +472,21 @@ export default function PressManagement() {
                     </div>
                 </div>
             )}
+
+            {/* Toast Container */}
+            <ToastContainer />
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                onConfirm={confirmDelete}
+                title="İçeriği Sil"
+                message={`"${deleteConfirm?.title}" adlı basın içeriğini silmek istediğinize emin misiniz?`}
+                confirmText="Evet, Sil"
+                cancelText="İptal"
+                type="danger"
+            />
         </div>
     );
 }

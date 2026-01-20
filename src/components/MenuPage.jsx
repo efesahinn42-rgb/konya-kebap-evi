@@ -1,9 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useMenuData } from '@/hooks/useMenuData';
 import Navbar from '@/components/Navbar';
+import { MenuStructuredData } from '@/components/StructuredData';
 
 // Fallback data when database is empty
 const fallbackData = [
@@ -144,63 +145,7 @@ const CategorySection = ({ category, isOpen, onToggle }) => (
 
 export default function MenuPage() {
     const [openCategories, setOpenCategories] = useState([]);
-    const [menuData, setMenuData] = useState(fallbackData);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchMenuData = async () => {
-            try {
-                // Fetch categories
-                const { data: categories, error: catError } = await supabase
-                    .from('menu_categories')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('display_order', { ascending: true });
-
-                if (catError || !categories || categories.length === 0) {
-                    setMenuData(fallbackData);
-                    setLoading(false);
-                    return;
-                }
-
-                // Fetch all menu items
-                const { data: items, error: itemError } = await supabase
-                    .from('menu_items')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('display_order', { ascending: true });
-
-                if (itemError) {
-                    setMenuData(fallbackData);
-                    setLoading(false);
-                    return;
-                }
-
-                // Combine categories with their items
-                const transformedData = categories.map(cat => ({
-                    id: cat.id,
-                    title: cat.title,
-                    icon: cat.icon || '🍽️',
-                    items: (items || [])
-                        .filter(item => item.category_id === cat.id)
-                        .map(item => ({
-                            name: item.name,
-                            price: parseFloat(item.price).toFixed(2),
-                            description: item.description || '',
-                            image: item.image_url
-                        }))
-                }));
-
-                setMenuData(transformedData.length > 0 ? transformedData : fallbackData);
-            } catch (err) {
-                console.error('Error fetching menu:', err);
-                setMenuData(fallbackData);
-            }
-            setLoading(false);
-        };
-
-        fetchMenuData();
-    }, []);
+    const { data: menuData = fallbackData, isLoading: loading } = useMenuData();
 
     const toggleCategory = (id) => {
         setOpenCategories(prev =>
@@ -211,9 +156,11 @@ export default function MenuPage() {
     };
 
     return (
-        <main className="w-full overflow-x-hidden">
-            <Navbar />
-            <section id="menu" className="min-h-screen bg-[#0a0a0a] pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-24">
+        <>
+            <MenuStructuredData menuItems={menuData} />
+            <main className="w-full overflow-x-hidden">
+                <Navbar />
+                <section id="menu" className="min-h-screen bg-[#0a0a0a] pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-24">
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <motion.div

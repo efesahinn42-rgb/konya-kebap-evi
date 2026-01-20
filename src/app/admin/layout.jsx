@@ -46,6 +46,7 @@ export default function AdminLayout({ children }) {
     const [userName, setUserName] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
 
     // Skip auth check for login page
     const isLoginPage = pathname === '/admin/login';
@@ -114,8 +115,36 @@ export default function AdminLayout({ children }) {
     }, [pathname, userRole, loading, isLoginPage, router]);
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        router.push('/admin/login');
+        // Prevent multiple clicks
+        if (loggingOut) return;
+
+        setLoggingOut(true);
+
+        try {
+            // Clear all user state first
+            setUser(null);
+            setUserRole(null);
+            setUserName(null);
+
+            // Sign out from Supabase
+            const { error } = await supabase.auth.signOut();
+
+            if (error) {
+                console.error('Logout error:', error);
+                // Even if there's an error, redirect to login
+            }
+
+            // Use window.location for more reliable redirect
+            // This ensures the page fully reloads and clears all state
+            window.location.href = '/admin/login';
+        } catch (err) {
+            console.error('Logout failed:', err);
+            // Force redirect even on error
+            window.location.href = '/admin/login';
+        } finally {
+            // This won't execute if window.location redirects, but good practice
+            setLoggingOut(false);
+        }
     };
 
     // Show login page without layout
@@ -230,10 +259,23 @@ export default function AdminLayout({ children }) {
                     </div>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl transition-all"
+                        disabled={loggingOut}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <LogOut className="w-4 h-4" />
-                        <span>Çıkış Yap</span>
+                        {loggingOut ? (
+                            <>
+                                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                <span>Çıkılıyor...</span>
+                            </>
+                        ) : (
+                            <>
+                                <LogOut className="w-4 h-4" />
+                                <span>Çıkış Yap</span>
+                            </>
+                        )}
                     </button>
                 </div>
             </aside>

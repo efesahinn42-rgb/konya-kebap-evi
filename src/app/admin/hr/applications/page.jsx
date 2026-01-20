@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { FileText, Mail, Phone, User, Calendar, Eye, Check, X, MessageSquare, Download } from 'lucide-react';
+import { getUserRole } from '@/lib/auth';
+import { FileText, Mail, Phone, User, Calendar, Eye, Check, X, MessageSquare, Download, Zap } from 'lucide-react';
+import { useToast } from '@/components/admin/Toast';
 
 const statusColors = {
     pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Beklemede' },
@@ -11,12 +13,29 @@ const statusColors = {
 };
 
 export default function ApplicationsManagement() {
+    const { success, error: showError, ToastContainer } = useToast();
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState('admin');
     const [selectedApp, setSelectedApp] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
+    const [showPriority, setShowPriority] = useState(false);
 
     useEffect(() => {
+        const init = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const roleData = await getUserRole(session.user.id, session.user.email);
+                if (roleData) {
+                    setUserRole(roleData.role);
+                    // Staff için öncelikli görünümü varsayılan aç
+                    if (roleData.role === 'staff') {
+                        setShowPriority(true);
+                    }
+                }
+            }
+        };
+        init();
         fetchApplications();
     }, []);
 
@@ -46,15 +65,33 @@ export default function ApplicationsManagement() {
             if (selectedApp?.id === id) {
                 setSelectedApp({ ...selectedApp, status: newStatus });
             }
+            success(`Başvuru durumu "${statusColors[newStatus]?.label}" olarak güncellendi`);
         } catch (err) {
             console.error('Error updating status:', err);
-            alert('Durum güncellenirken bir hata oluştu');
+            showError('Durum güncellenirken bir hata oluştu');
         }
     };
 
-    const filteredApplications = filterStatus === 'all'
-        ? applications
-        : applications.filter(app => app.status === filterStatus);
+    const quickUpdateStatus = async (id, newStatus) => {
+        await updateStatus(id, newStatus);
+    };
+
+    const filteredApplications = (() => {
+        let filtered = filterStatus === 'all'
+            ? applications
+            : applications.filter(app => app.status === filterStatus);
+        
+        // Staff için öncelikli görünüm: pending başvuruları önce göster
+        if (userRole === 'staff' && showPriority) {
+            filtered = [...filtered].sort((a, b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+        }
+        
+        return filtered;
+    })();
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('tr-TR', {
@@ -83,6 +120,19 @@ export default function ApplicationsManagement() {
                         )}
                     </p>
                 </div>
+                {userRole === 'staff' && (
+                    <button
+                        onClick={() => setShowPriority(!showPriority)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                            showPriority
+                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                        }`}
+                    >
+                        <Zap className="w-4 h-4" />
+                        {showPriority ? 'Öncelikli Görünüm: Açık' : 'Öncelikli Görünüm: Kapalı'}
+                    </button>
+                )}
             </div>
 
             {/* Filter */}
@@ -138,16 +188,28 @@ export default function ApplicationsManagement() {
                         return (
                             <div
                                 key={app.id}
-                                onClick={() => setSelectedApp(app)}
-                                className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 cursor-pointer hover:border-zinc-700 transition-all"
+                                className={`bg-zinc-900 border rounded-2xl p-6 transition-all ${
+                                    app.status === 'pending' && showPriority
+                                        ? 'border-yellow-500/30 bg-yellow-500/5'
+                                        : 'border-zinc-800 hover:border-zinc-700'
+                                }`}
                             >
                                 <div className="flex items-center justify-between">
-                                    <div className="flex-1">
+                                    <div 
+                                        className="flex-1 cursor-pointer"
+                                        onClick={() => setSelectedApp(app)}
+                                    >
                                         <div className="flex items-center gap-3 mb-2">
                                             <h3 className="text-lg font-bold text-white">{app.full_name}</h3>
                                             <span className={`px-2 py-1 ${status.bg} ${status.text} text-xs font-bold rounded`}>
                                                 {status.label}
                                             </span>
+                                            {app.status === 'pending' && showPriority && (
+                                                <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs font-bold rounded-full flex items-center gap-1">
+                                                    <Zap className="w-3 h-3" />
+                                                    Öncelikli
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="flex flex-wrap items-center gap-4 text-zinc-400 text-sm">
                                             <span className="flex items-center gap-1">
@@ -164,7 +226,39 @@ export default function ApplicationsManagement() {
                                             </span>
                                         </div>
                                     </div>
-                                    <Eye className="w-5 h-5 text-zinc-500" />
+                                    <div className="flex items-center gap-2">
+                                        {/* Quick Actions for Staff */}
+                                        {userRole === 'staff' && app.status === 'pending' && (
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        quickUpdateStatus(app.id, 'reviewed');
+                                                    }}
+                                                    className="px-2 py-1 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded text-xs font-medium transition-colors"
+                                                    title="Hızlı İncele"
+                                                >
+                                                    İncele
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        quickUpdateStatus(app.id, 'contacted');
+                                                    }}
+                                                    className="px-2 py-1 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded text-xs font-medium transition-colors"
+                                                    title="Hızlı İletişim"
+                                                >
+                                                    İletişim
+                                                </button>
+                                            </div>
+                                        )}
+                                        <button
+                                            onClick={() => setSelectedApp(app)}
+                                            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+                                        >
+                                            <Eye className="w-5 h-5 text-zinc-500" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -294,6 +388,9 @@ export default function ApplicationsManagement() {
                     </div>
                 </div>
             )}
+
+            {/* Toast Container */}
+            <ToastContainer />
         </div>
     );
 }

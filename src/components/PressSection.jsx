@@ -1,60 +1,42 @@
 'use client';
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Newspaper, ExternalLink, Calendar } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { usePressItems } from '@/hooks/usePressItems';
 import ScrollDownButton from './ScrollDownButton';
 
-// Fallback data
+// Fallback data (veritabanı şemasına uygun)
 const fallbackPressItems = [
     {
         title: "Konya'nın En İyi Kebap Deneyimi",
-        source: "Gurme Rehberi",
-        date: "2023-11-15",
-        summary: "Şehrin kalbinde, geleneksel lezzetleri modern sunumla buluşturan eşsiz bir mekan.",
-        url: "#",
-        image_url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=800"
+        outlet: "Gurme Rehberi",
+        date: "Kasım 2023",
+        quote: "Şehrin kalbinde, geleneksel lezzetleri modern sunumla buluşturan eşsiz bir mekan.",
+        external_url: "#",
+        image_url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=800",
+        color: "#d4af37"
     },
     {
         title: "Anadolu Mutfağının Yıldızları",
-        source: "Lezzet Dergisi",
-        date: "2023-08-20",
-        summary: "Konya Kebap Evi, otantik tarifleri ve misafirperverliği ile parlıyor.",
-        url: "#",
-        image_url: "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800"
+        outlet: "Lezzet Dergisi",
+        date: "Ağustos 2023",
+        quote: "Konya Kebap Evi, otantik tarifleri ve misafirperverliği ile parlıyor.",
+        external_url: "#",
+        image_url: "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800",
+        color: "#d4af37"
     },
     {
         title: "Etliekmek Hakkında Bilmeniz Gerekenler",
-        source: "Gastronomi Dünyası",
-        date: "2023-05-10",
-        summary: "Ustalıkla açılan hamur ve özel harcın muhteşem uyumu.",
-        url: "#",
-        image_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=800"
+        outlet: "Gastronomi Dünyası",
+        date: "Mayıs 2023",
+        quote: "Ustalıkla açılan hamur ve özel harcın muhteşem uyumu.",
+        external_url: "#",
+        image_url: "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=800",
+        color: "#d4af37"
     }
 ];
 
 export default function PressSection() {
-    const [pressItems, setPressItems] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchPressItems = async () => {
-            const { data, error } = await supabase
-                .from('press_items')
-                .select('*')
-                .eq('is_active', true)
-                .order('published_at', { ascending: false });
-
-            if (!error && data && data.length > 0) {
-                setPressItems(data);
-            } else {
-                setPressItems(fallbackPressItems);
-            }
-            setLoading(false);
-        };
-
-        fetchPressItems();
-    }, []);
+    const { data: pressItems = fallbackPressItems, isLoading: loading } = usePressItems();
 
     return (
         <section id="press" className="relative bg-[#0a0a0a] overflow-hidden w-full">
@@ -104,7 +86,7 @@ export default function PressSection() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                             {pressItems.map((item, index) => (
                                 <motion.div
-                                    key={index}
+                                    key={item.id || index}
                                     className="group relative bg-black/50 border border-white/5 hover:border-[#d4af37]/30 rounded-2xl overflow-hidden transition-all duration-300 flex flex-col h-full"
                                     initial={{ opacity: 0, y: 30 }}
                                     whileInView={{ opacity: 1, y: 0 }}
@@ -120,8 +102,11 @@ export default function PressSection() {
                                             alt={item.title}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                         />
-                                        <div className="absolute top-4 right-4 z-20 bg-[#d4af37] text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                            {item.source}
+                                        <div 
+                                            className="absolute top-4 right-4 z-20 text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"
+                                            style={{ backgroundColor: item.color || '#d4af37' }}
+                                        >
+                                            {item.outlet}
                                         </div>
                                     </div>
 
@@ -129,27 +114,31 @@ export default function PressSection() {
                                     <div className="p-6 flex flex-col flex-grow text-left">
                                         <div className="flex items-center gap-2 text-zinc-500 text-xs mb-3">
                                             <Calendar className="w-3 h-3" />
-                                            <span>{new Date(item.date || item.published_at).toLocaleDateString('tr-TR')}</span>
+                                            <span>{item.date || 'Tarih belirtilmemiş'}</span>
                                         </div>
 
                                         <h3 className="text-xl font-bold text-white mb-3 group-hover:text-[#d4af37] transition-colors line-clamp-2">
                                             {item.title}
                                         </h3>
 
-                                        <p className="text-zinc-400 text-sm leading-relaxed mb-6 line-clamp-3">
-                                            {item.summary || item.description}
-                                        </p>
+                                        {item.quote && (
+                                            <p className="text-zinc-400 text-sm leading-relaxed mb-6 line-clamp-3 italic">
+                                                "{item.quote}"
+                                            </p>
+                                        )}
 
                                         <div className="mt-auto">
-                                            <a
-                                                href={item.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 text-[#d4af37] text-sm font-bold uppercase tracking-wider hover:gap-3 transition-all"
-                                            >
-                                                <span>Haberi Oku</span>
-                                                <ExternalLink className="w-4 h-4" />
-                                            </a>
+                                            {item.external_url && item.external_url !== '#' ? (
+                                                <a
+                                                    href={item.external_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-2 text-[#d4af37] text-sm font-bold uppercase tracking-wider hover:gap-3 transition-all"
+                                                >
+                                                    <span>Haberi Oku</span>
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </a>
+                                            ) : null}
                                         </div>
                                     </div>
                                 </motion.div>

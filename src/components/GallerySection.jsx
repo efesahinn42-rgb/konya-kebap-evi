@@ -2,48 +2,16 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
+import { useGalleryItems } from '@/hooks/useGalleryItems';
 import ScrollDownButton from './ScrollDownButton';
 
-// Fallback data in case database is empty
-const fallbackItems = [
-    { category: 'misafir', src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=800', alt: 'Misafirlerimiz' },
-    { category: 'imza', src: 'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=800', alt: 'İmza Lezzetlerimiz' },
-];
-
 export default function GallerySection() {
-    const [galleryItems, setGalleryItems] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { data: galleryItems = [], isLoading: loading } = useGalleryItems();
     const [activeCategory, setActiveCategory] = useState('misafir');
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [currentCategoryImages, setCurrentCategoryImages] = useState([]);
-
-    // Fetch gallery items from Supabase
-    useEffect(() => {
-        const fetchGalleryItems = async () => {
-            const { data, error } = await supabase
-                .from('gallery_items')
-                .select('*')
-                .eq('is_active', true)
-                .order('display_order', { ascending: true });
-
-            if (!error && data && data.length > 0) {
-                // Transform data to match the component's expected format
-                const items = data.map(item => ({
-                    category: item.category,
-                    src: item.image_url,
-                    alt: item.alt_text || (item.category === 'misafir' ? 'Misafirlerimiz' : 'İmza Lezzeti')
-                }));
-                setGalleryItems(items);
-            } else {
-                setGalleryItems(fallbackItems);
-            }
-            setLoading(false);
-        };
-
-        fetchGalleryItems();
-    }, []);
 
     // Filter images by category
     const filteredItems = galleryItems.filter(item => item.category === activeCategory);
@@ -160,7 +128,9 @@ export default function GallerySection() {
                     {loading ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                             {[1, 2, 3, 4, 5, 6].map((i) => (
-                                <div key={i} className="aspect-square bg-zinc-800 rounded-xl sm:rounded-2xl animate-pulse" />
+                                <div key={i} className="aspect-square bg-zinc-800/30 rounded-xl sm:rounded-2xl">
+                                    <div className="h-full w-full bg-gradient-to-r from-zinc-800/50 via-zinc-700/50 to-zinc-800/50 bg-[length:200%_100%] animate-[shimmer_2s_infinite]" />
+                                </div>
                             ))}
                         </div>
                     ) : filteredItems.length === 0 ? (
@@ -182,10 +152,13 @@ export default function GallerySection() {
                                         onClick={() => openLightbox(index, activeCategory)}
                                     >
                                         <div className="relative aspect-square overflow-hidden rounded-xl sm:rounded-2xl border border-white/5 hover:border-[#d4af37]/30 transition-all duration-300">
-                                            <img
+                                            <Image
                                                 src={item.src}
                                                 alt={item.alt}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                fill
+                                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                                loading="lazy"
                                             />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                             <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">

@@ -61,13 +61,19 @@ export async function getUserRole(userId, email = null) {
                 .from('admin_users')
                 .select('role, name, email')
                 .eq('user_id', userId)
-                .single();
+                .maybeSingle(); // .single() yerine .maybeSingle() kullan
 
             if (!error && data) {
                 console.log('getUserRole: Kullanıcı bulundu (user_id):', data);
                 return data;
             }
-            console.log('getUserRole: user_id ile bulunamadı, email deneniyor...');
+            
+            // 406 hatası özel olarak handle et
+            if (error && error.code === 'PGRST116') {
+                console.log('getUserRole: user_id ile kayıt bulunamadı, email deneniyor...');
+            } else if (error) {
+                console.warn('getUserRole: user_id sorgusu hatası:', error.message, error.code);
+            }
         }
 
         // user_id ile bulunamazsa email ile dene
@@ -76,11 +82,15 @@ export async function getUserRole(userId, email = null) {
                 .from('admin_users')
                 .select('role, name, email')
                 .eq('email', email)
-                .single();
+                .maybeSingle(); // .single() yerine .maybeSingle() kullan
 
             if (!error && data) {
                 console.log('getUserRole: Kullanıcı bulundu (email):', data);
                 return data;
+            }
+            
+            if (error) {
+                console.warn('getUserRole: email sorgusu hatası:', error.message, error.code);
             }
         }
 

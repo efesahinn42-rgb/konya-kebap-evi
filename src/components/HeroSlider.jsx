@@ -2,31 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabase';
+import { useHeroSlides } from '@/hooks/useHeroSlides';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 export default function HeroSlider() {
-    const [slides, setSlides] = useState([]);
+    const { data: slides = [], isLoading: loading } = useHeroSlides();
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [loading, setLoading] = useState(true);
-
-    // Fetch slides from Supabase
-    useEffect(() => {
-        const fetchSlides = async () => {
-            const { data, error } = await supabase
-                .from('hero_slides')
-                .select('*')
-                .eq('is_active', true)
-                .order('display_order', { ascending: true });
-
-            if (!error && data && data.length > 0) {
-                setSlides(data);
-            }
-            setLoading(false);
-        };
-
-        fetchSlides();
-    }, []);
 
     // Auto-slide every 6 seconds
     useEffect(() => {
@@ -69,6 +50,13 @@ export default function HeroSlider() {
     };
 
     const currentSlide = slides.length > 0 ? slides[currentIndex] : defaultSlide;
+    
+    // Reset index when slides change
+    useEffect(() => {
+        if (slides.length > 0 && currentIndex >= slides.length) {
+            setCurrentIndex(0);
+        }
+    }, [slides.length, currentIndex]);
 
     return (
         <section id="hero" className="relative w-full h-screen overflow-hidden bg-black">
@@ -93,24 +81,20 @@ export default function HeroSlider() {
                             scale: { duration: 10, ease: 'easeInOut', times: [0, 0.5, 1] }
                         }}
                         className="absolute inset-0"
-                        style={{ transformOrigin: 'left center' }}
+                        style={{ 
+                            transformOrigin: 'left center',
+                            willChange: 'transform, opacity'
+                        }}
                     >
-                        {currentSlide.image_url.startsWith('/') ? (
-                            <Image
-                                src={currentSlide.image_url}
-                                alt={currentSlide.alt_text || 'Konya Kebap Evi'}
-                                fill
-                                priority
-                                className="object-cover object-center"
-                                sizes="100vw"
-                            />
-                        ) : (
-                            <img
-                                src={currentSlide.image_url}
-                                alt={currentSlide.alt_text || 'Konya Kebap Evi'}
-                                className="w-full h-full object-cover object-center"
-                            />
-                        )}
+                        <Image
+                            src={currentSlide.image_url}
+                            alt={currentSlide.alt_text || 'Konya Kebap Evi'}
+                            fill
+                            priority={currentIndex === 0}
+                            className="object-cover object-center"
+                            sizes="100vw"
+                            quality={90}
+                        />
                     </motion.div>
                 </AnimatePresence>
             )}
