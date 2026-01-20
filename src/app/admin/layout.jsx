@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase, handleAuthError } from '@/lib/supabase';
 import { getUserRole, hasAccess, isMenuVisible } from '@/lib/auth';
 import Link from 'next/link';
 import {
@@ -58,24 +58,46 @@ export default function AdminLayout({ children }) {
         }
 
         const checkAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
 
-            if (!session) {
-                router.push('/admin/login');
-                setLoading(false);
-            } else {
-                setUser(session.user);
-
-                // Kullanıcı rolünü al (user_id ve email ile)
-                const roleData = await getUserRole(session.user.id, session.user.email);
-                if (roleData) {
-                    setUserRole(roleData.role);
-                    setUserName(roleData.name);
-                } else {
-                    // admin_users tablosunda yoksa varsayılan olarak admin yap (ilk kullanıcı için)
-                    setUserRole('admin');
-                    setUserName(session.user.email?.split('@')[0] || 'Admin');
+                // Handle refresh token errors
+                if (error) {
+                    const isRefreshTokenError = error.message?.includes('Refresh Token') || 
+                                                error.message?.includes('refresh_token') ||
+                                                error.message?.includes('Invalid Refresh Token');
+                    
+                    if (isRefreshTokenError) {
+                        await handleAuthError(error);
+                        router.push('/admin/login');
+                        setLoading(false);
+                        return;
+                    }
                 }
+
+                if (!session) {
+                    router.push('/admin/login');
+                    setLoading(false);
+                } else {
+                    setUser(session.user);
+
+                    // Kullanıcı rolünü al (user_id ve email ile)
+                    const roleData = await getUserRole(session.user.id, session.user.email);
+                    if (roleData) {
+                        setUserRole(roleData.role);
+                        setUserName(roleData.name);
+                    } else {
+                        // admin_users tablosunda yoksa varsayılan olarak admin yap (ilk kullanıcı için)
+                        setUserRole('admin');
+                        setUserName(session.user.email?.split('@')[0] || 'Admin');
+                    }
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error('Auth check error:', err);
+                // On any error, clear session and redirect to login
+                await handleAuthError(err);
+                router.push('/admin/login');
                 setLoading(false);
             }
         };
@@ -83,20 +105,38 @@ export default function AdminLayout({ children }) {
         checkAuth();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_OUT') {
-                router.push('/admin/login');
-                setUserRole(null);
-                setUserName(null);
-            } else if (session) {
-                setUser(session.user);
-                const roleData = await getUserRole(session.user.id, session.user.email);
-                if (roleData) {
-                    setUserRole(roleData.role);
-                    setUserName(roleData.name);
-                } else {
-                    // Varsayılan rol
-                    setUserRole('admin');
-                    setUserName(session.user.email?.split('@')[0] || 'Admin');
+            try {
+                if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+                    if (event === 'SIGNED_OUT') {
+                        router.push('/admin/login');
+                        setUser(null);
+                        setUserRole(null);
+                        setUserName(null);
+                    } else if (event === 'TOKEN_REFRESHED' && session) {
+                        // Token refreshed successfully, update user if needed
+                        setUser(session.user);
+                    }
+                } else if (event === 'SIGNED_IN' && session) {
+                    setUser(session.user);
+                    const roleData = await getUserRole(session.user.id, session.user.email);
+                    if (roleData) {
+                        setUserRole(roleData.role);
+                        setUserName(roleData.name);
+                    } else {
+                        // Varsayılan rol
+                        setUserRole('admin');
+                        setUserName(session.user.email?.split('@')[0] || 'Admin');
+                    }
+                }
+            } catch (err) {
+                console.error('Auth state change error:', err);
+                // Handle refresh token errors during state change
+                if (err?.message?.includes('Refresh Token') || err?.message?.includes('refresh_token')) {
+                    await handleAuthError(err);
+                    router.push('/admin/login');
+                    setUser(null);
+                    setUserRole(null);
+                    setUserName(null);
                 }
             }
         });
@@ -131,7 +171,18 @@ export default function AdminLayout({ children }) {
 
             if (error) {
                 console.error('Logout error:', error);
-                // Even if there's an error, redirect to login
+                // Handle refresh token errors during logout
+                await handleAuthError(error);
+            }
+
+            // Clear localStorage
+            if (typeof window !== 'undefined') {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('sb-') || key.includes('supabase')) {
+                        localStorage.removeItem(key);
+                    }
+                });
             }
 
             // Use window.location for more reliable redirect
@@ -139,6 +190,8 @@ export default function AdminLayout({ children }) {
             window.location.href = '/admin/login';
         } catch (err) {
             console.error('Logout failed:', err);
+            // Handle auth errors
+            await handleAuthError(err);
             // Force redirect even on error
             window.location.href = '/admin/login';
         } finally {

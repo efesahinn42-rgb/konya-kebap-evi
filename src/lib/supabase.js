@@ -6,8 +6,40 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 // Create client only if we have the required env vars
 // This prevents build errors during static page generation
 export const supabase = supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: false,
+            storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        },
+    })
     : null;
+
+// Helper function to handle auth errors and clear invalid sessions
+export const handleAuthError = async (error) => {
+    if (!supabase) return;
+
+    // Check if it's a refresh token error
+    if (error?.message?.includes('Refresh Token') || error?.message?.includes('refresh_token')) {
+        try {
+            // Clear the invalid session
+            await supabase.auth.signOut();
+            
+            // Clear localStorage
+            if (typeof window !== 'undefined') {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith('sb-') || key.includes('supabase')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+        } catch (signOutError) {
+            console.error('Error clearing invalid session:', signOutError);
+        }
+    }
+};
 
 // Helper function to get public URL for storage files
 export const getPublicUrl = (bucket, path) => {

@@ -73,20 +73,16 @@ const MenuCard = ({ item }) => (
         viewport={{ once: true }}
         whileHover={{ y: -5 }}
     >
-        {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden">
             <img
                 src={item.image}
                 alt={item.name}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
-            {/* Price Badge */}
             <div className="absolute top-3 right-3 px-3 py-1.5 bg-[#d4af37] text-black font-black text-sm rounded-full shadow-lg">
                 {item.price} ₺
             </div>
         </div>
-
-        {/* Content */}
         <div className="p-4 sm:p-5">
             <h4 className="text-lg sm:text-xl font-black text-white mb-2 group-hover:text-[#d4af37] transition-colors">
                 {item.name}
@@ -100,7 +96,6 @@ const MenuCard = ({ item }) => (
 
 const CategorySection = ({ category, isOpen, onToggle }) => (
     <div className="mb-4">
-        {/* Category Header */}
         <motion.button
             onClick={onToggle}
             className="w-full flex items-center justify-between p-4 sm:p-5 bg-zinc-900/80 hover:bg-zinc-800/80 rounded-2xl border border-white/10 hover:border-[#d4af37]/30 transition-all group"
@@ -121,8 +116,6 @@ const CategorySection = ({ category, isOpen, onToggle }) => (
                 <ChevronDown className="w-6 h-6 sm:w-7 sm:h-7" />
             </motion.div>
         </motion.button>
-
-        {/* Items Grid */}
         <AnimatePresence>
             {isOpen && (
                 <motion.div
@@ -161,63 +154,59 @@ export default function MenuPage() {
             <main className="w-full overflow-x-hidden">
                 <Navbar />
                 <section id="menu" className="min-h-screen bg-[#0a0a0a] pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-24">
-                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <motion.div
-                    className="text-center mb-8 sm:mb-12 lg:mb-16"
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                >
-                    <motion.div
-                        className="inline-flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                    >
-                        <span className="w-8 sm:w-10 lg:w-12 h-[2px] bg-[#d4af37]"></span>
-                        <span className="text-[#d4af37] text-xs sm:text-sm font-black tracking-[0.3em] sm:tracking-[0.4em] lg:tracking-[0.5em] uppercase">Lezzetler</span>
-                        <span className="w-8 sm:w-10 lg:w-12 h-[2px] bg-[#d4af37]"></span>
-                    </motion.div>
-                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white tracking-tighter px-2">
-                        MENÜMÜZ
-                    </h2>
-                    <p className="text-zinc-400 mt-3 sm:mt-4 text-sm sm:text-base lg:text-lg max-w-[600px] mx-auto px-2">
-                        Konya mutfağının en seçkin lezzetleri, geleneksel tariflerle modern sunumda
-                    </p>
-                </motion.div>
-
-                {/* Menu Categories */}
-                {loading ? (
-                    <div className="space-y-4">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="bg-zinc-900/80 rounded-2xl h-20 animate-pulse" />
-                        ))}
+                    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+                        <motion.div
+                            className="text-center mb-8 sm:mb-12 lg:mb-16"
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                        >
+                            <motion.div
+                                className="inline-flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6"
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                <span className="w-8 sm:w-10 lg:w-12 h-[2px] bg-[#d4af37]"></span>
+                                <span className="text-[#d4af37] text-xs sm:text-sm font-black tracking-[0.3em] sm:tracking-[0.4em] lg:tracking-[0.5em] uppercase">Lezzetler</span>
+                                <span className="w-8 sm:w-10 lg:w-12 h-[2px] bg-[#d4af37]"></span>
+                            </motion.div>
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white tracking-tighter px-2">
+                                MENÜMÜZ
+                            </h2>
+                            <p className="text-zinc-400 mt-3 sm:mt-4 text-sm sm:text-base lg:text-lg max-w-[600px] mx-auto px-2">
+                                Konya mutfağının en seçkin lezzetleri, geleneksel tariflerle modern sunumda
+                            </p>
+                        </motion.div>
+                        {loading ? (
+                            <div className="space-y-4">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="bg-zinc-900/80 rounded-2xl h-20 animate-pulse" />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {menuData.map((category) => (
+                                    <CategorySection
+                                        key={category.id}
+                                        category={category}
+                                        isOpen={openCategories.includes(category.id)}
+                                        onToggle={() => toggleCategory(category.id)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        <motion.p
+                            className="text-center text-zinc-500 text-xs sm:text-sm mt-8 sm:mt-12 px-2"
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                        >
+                            * Fiyatlar KDV dahildir. Menü içerikleri ve fiyatlar değişiklik gösterebilir.
+                        </motion.p>
                     </div>
-                ) : (
-                    <div className="space-y-4">
-                        {menuData.map((category) => (
-                            <CategorySection
-                                key={category.id}
-                                category={category}
-                                isOpen={openCategories.includes(category.id)}
-                                onToggle={() => toggleCategory(category.id)}
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {/* Footer Note */}
-                <motion.p
-                    className="text-center text-zinc-500 text-xs sm:text-sm mt-8 sm:mt-12 px-2"
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                >
-                    * Fiyatlar KDV dahildir. Menü içerikleri ve fiyatlar değişiklik gösterebilir.
-                </motion.p>
-                </div>
-            </section>
-        </main>
+                </section>
+            </main>
+        </>
     );
 }
