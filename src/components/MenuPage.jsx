@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import Navbar from '@/components/Navbar';
 
 // Fallback data when database is empty
 const fallbackData = [
@@ -210,8 +211,10 @@ export default function MenuPage() {
     };
 
     return (
-        <section id="menu" className="min-h-screen bg-[#0a0a0a] py-12 sm:py-16 lg:py-24">
-            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="w-full overflow-x-hidden">
+            <Navbar />
+            <section id="menu" className="min-h-screen bg-[#0a0a0a] pt-24 sm:pt-28 lg:pt-32 pb-12 sm:pb-16 lg:pb-24">
+                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <motion.div
                     className="text-center mb-8 sm:mb-12 lg:mb-16"
@@ -266,7 +269,8 @@ export default function MenuPage() {
                 >
                     * Fiyatlar KDV dahildir. Menü içerikleri ve fiyatlar değişiklik gösterebilir.
                 </motion.p>
-            </div>
-        </section>
+                </div>
+            </section>
+        </main>
     );
 }

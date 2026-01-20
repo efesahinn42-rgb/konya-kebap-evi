@@ -13,7 +13,7 @@ import {
 const menuItems = [
     { label: 'ANA SAYFA', href: '/', isPage: true, icon: Home },
     { label: 'HAKKIMIZDA', href: '/#about', isPage: false, icon: Info },
-    { label: 'MENÜMÜZ', href: '/menu', isModal: true, icon: UtensilsCrossed },
+    { label: 'MENÜMÜZ', href: '/menu', isPage: true, icon: UtensilsCrossed },
     { label: 'REZERVASYON', href: '/#reservation', isPage: false, icon: CalendarCheck },
     { label: 'MİSAFİRLERİMİZ', href: '/#gallery', isPage: false, icon: Images },
     { label: 'ÖDÜLLERİMİZ', href: '/#awards', isPage: false, icon: Award },
@@ -25,6 +25,7 @@ export default function Navbar() {
     const pathname = usePathname();
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [currentHash, setCurrentHash] = useState('');
 
     // Scroll olduğunda arka plan değiştir
     useEffect(() => {
@@ -35,26 +36,92 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleLinkClick = (item) => {
+    // Hash durumunu takip et
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setCurrentHash(window.location.hash);
+            
+            const handleHashChange = () => {
+                setCurrentHash(window.location.hash);
+            };
+            
+            window.addEventListener('hashchange', handleHashChange);
+            return () => window.removeEventListener('hashchange', handleHashChange);
+        }
+    }, []);
+
+    // Hash link scroll işlemi ve ana sayfaya gelindiğinde en başa scroll
+    useEffect(() => {
+        if (pathname === '/') {
+            // Hash varsa ilgili bölüme scroll et
+            if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+                setTimeout(() => {
+                    const element = document.getElementById(hash);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 100);
+            } else {
+                // Hash yoksa ve scrollToTop flag'i varsa en başa scroll et
+                if (sessionStorage.getItem('scrollToTop') === 'true') {
+                    setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        sessionStorage.removeItem('scrollToTop');
+                    }, 100);
+                }
+            }
+        }
+    }, [pathname]);
+
+    const handleLinkClick = (item, e) => {
+        if (e) {
+            e.preventDefault();
+        }
         setMobileMenuOpen(false);
 
-        if (item.isModal) {
-            if (typeof window !== 'undefined' && window.openMenuModal) {
-                window.openMenuModal();
+        // Ana sayfa linki ise
+        if (item.href === '/') {
+            if (pathname === '/') {
+                // Zaten ana sayfadaysak en başa scroll et
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                // Başka sayfadaysak ana sayfaya git ve en başa scroll et
+                window.location.href = '/';
             }
             return;
         }
 
+        // Hash link ise
         if (item.href.startsWith('/#')) {
             const hash = item.href.split('#')[1];
+            
+            // Ana sayfadaysak direkt scroll et
             if (pathname === '/') {
                 const element = document.getElementById(hash);
                 if (element) {
                     element.scrollIntoView({ behavior: 'smooth' });
                 }
             } else {
+                // Başka sayfadaysak önce ana sayfaya git, sonra scroll et
                 window.location.href = item.href;
             }
+        }
+    };
+
+    const handleHomePageClick = (e) => {
+        e.preventDefault();
+        setMobileMenuOpen(false);
+        
+        if (pathname === '/') {
+            // Zaten ana sayfadaysak en başa scroll et
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            // Başka sayfadaysak ana sayfaya git ve en başa scroll et
+            // window.location.href kullanarak sayfa yeniden yüklenecek ve scroll pozisyonu sıfırlanacak
+            // Smooth scroll için bir flag ekleyelim
+            sessionStorage.setItem('scrollToTop', 'true');
+            window.location.href = '/';
         }
     };
 
@@ -76,7 +143,10 @@ export default function Navbar() {
                         {/* Desktop Menu - Centered */}
                         <nav className="hidden lg:flex items-center">
                             {menuItems.map((item, index) => {
-                                const isActive = pathname === item.href;
+                                // Hash linkler için aktif durum kontrolü
+                                const isActive = item.isPage 
+                                    ? pathname === item.href 
+                                    : pathname === '/' && currentHash === item.href;
                                 const isLast = index === menuItems.length - 1;
 
                                 const menuItemClass = `
@@ -102,6 +172,23 @@ export default function Navbar() {
                                 );
 
                                 if (item.isPage) {
+                                    // Ana sayfa linki için özel handler
+                                    if (item.href === '/') {
+                                        return (
+                                            <div key={item.label} className="flex items-center">
+                                                <a 
+                                                    href={item.href}
+                                                    onClick={handleHomePageClick}
+                                                    className={menuItemClass}
+                                                >
+                                                    {content}
+                                                </a>
+                                                {!isLast && <span className="text-[#d4af37]/30 mx-1">•</span>}
+                                            </div>
+                                        );
+                                    }
+                                    
+                                    // Diğer sayfa linkleri
                                     return (
                                         <div key={item.label} className="flex items-center">
                                             <Link href={item.href} className={menuItemClass}>
@@ -163,13 +250,26 @@ export default function Navbar() {
                                         transition={{ delay: index * 0.05 }}
                                     >
                                         {item.isPage ? (
-                                            <Link
-                                                href={item.href}
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className="text-xl font-bold tracking-[0.2em] text-white hover:text-[#d4af37] transition-colors"
-                                            >
-                                                {item.label}
-                                            </Link>
+                                            item.href === '/' ? (
+                                                <a
+                                                    href={item.href}
+                                                    onClick={(e) => {
+                                                        handleHomePageClick(e);
+                                                        setMobileMenuOpen(false);
+                                                    }}
+                                                    className="text-xl font-bold tracking-[0.2em] text-white hover:text-[#d4af37] transition-colors"
+                                                >
+                                                    {item.label}
+                                                </a>
+                                            ) : (
+                                                <Link
+                                                    href={item.href}
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                    className="text-xl font-bold tracking-[0.2em] text-white hover:text-[#d4af37] transition-colors"
+                                                >
+                                                    {item.label}
+                                                </Link>
+                                            )
                                         ) : (
                                             <button
                                                 onClick={() => handleLinkClick(item)}

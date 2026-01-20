@@ -333,6 +333,11 @@ export default function ReservationSection() {
                                         </motion.a>
                                     </div>
                                 </form>
+                                
+                                {/* Scroll Down Button */}
+                                <div className="mt-8 sm:mt-10">
+                                    <ScrollDownButton targetId="gallery" light={true} />
+                                </div>
                             </motion.div>
                         ) : (
                             <motion.div
@@ -375,6 +380,11 @@ export default function ReservationSection() {
                                 >
                                     Yeni Rezervasyon
                                 </motion.button>
+                                
+                                {/* Scroll Down Button */}
+                                <div className="mt-8 sm:mt-10">
+                                    <ScrollDownButton targetId="gallery" light={true} />
+                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>

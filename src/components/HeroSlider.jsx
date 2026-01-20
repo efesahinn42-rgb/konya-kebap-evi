@@ -50,7 +50,15 @@ export default function HeroSlider() {
     const scrollToContent = () => {
         const statsSection = document.getElementById('stats');
         if (statsSection) {
-            statsSection.scrollIntoView({ behavior: 'smooth' });
+            // Navbar yüksekliğini hesaba katarak scroll yap (yaklaşık 80px)
+            const navbarHeight = 80;
+            const elementPosition = statsSection.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
         }
     };
 

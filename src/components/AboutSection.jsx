@@ -241,11 +241,16 @@ export default function AboutSection() {
                             <span className="text-[10px] sm:text-xs lg:text-sm text-zinc-500 uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1 sm:mt-2 font-bold text-center">Geleneksel Tarif</span>
                         </div>
                     </div>
+                    
+                    {/* First Scroll Down Button - to Video Section */}
+                    <div className="mt-8 sm:mt-10 lg:mt-12">
+                        <ScrollDownButton targetId="ocakbasi-hikayeleri" light={true} />
+                    </div>
                 </motion.div>
             </div>
 
             {/* Page 2: Cinematic Video Teaser */}
-            <div className="min-h-screen flex items-center justify-center py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-20">
+            <div id="ocakbasi-hikayeleri" className="min-h-screen flex items-center justify-center py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-20">
                 <motion.div
                     className="relative w-full max-w-[1600px] h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[85vh] rounded-[1.5rem] sm:rounded-[2rem] lg:rounded-[4rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10 group bg-black"
                     initial={{ opacity: 0, scale: 0.95 }}

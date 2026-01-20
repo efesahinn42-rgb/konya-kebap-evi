@@ -205,7 +205,7 @@ export default function SocialResponsibilitySection() {
                 </motion.div>
             </div>
             <div className="absolute bottom-4 left-0 right-0 z-20">
-                <ScrollDownButton targetId="hr" />
+                <ScrollDownButton targetId="insan-kaynaklari" />
             </div>
         </section>
     );

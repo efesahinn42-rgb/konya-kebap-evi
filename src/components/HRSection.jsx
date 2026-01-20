@@ -1,9 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Briefcase, GraduationCap, Heart, Clock, Award, Send } from 'lucide-react';
+import { Users, Briefcase, GraduationCap, Heart, Clock, Award, Send, ChevronUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import ScrollDownButton from './ScrollDownButton';
 
 const benefits = [
     {
@@ -377,8 +376,21 @@ export default function HRSection() {
                     )}
                 </motion.div>
             </div>
-            <div className="absolute bottom-4 left-0 right-0 z-20">
-                <ScrollDownButton targetId="footer" />
+            
+            {/* Scroll to Top Button */}
+            <div className="flex justify-center w-full py-8 mt-auto relative z-20">
+                <motion.button
+                    onClick={() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="flex flex-col items-center gap-2 text-zinc-500 hover:text-[#d4af37] transition-colors"
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    aria-label="Başa dön"
+                >
+                    <span className="text-[10px] tracking-[0.2em] uppercase font-medium">Başa Dön</span>
+                    <ChevronUp className="w-5 h-5" />
+                </motion.button>
             </div>
         </section>
     );
