@@ -230,18 +230,101 @@ export default function AboutSection() {
                         </p>
                     </div>
 
-                    <div className="mt-10 sm:mt-12 lg:mt-16 flex justify-center gap-6 sm:gap-8 lg:gap-24">
-                        <div className="flex flex-col items-center">
-                            <span className="text-3xl sm:text-4xl lg:text-6xl font-black text-white">20+</span>
-                            <span className="text-[10px] sm:text-xs lg:text-sm text-zinc-500 uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1 sm:mt-2 font-bold text-center">Yıllık Tecrübe</span>
+                    <div className="mt-10 sm:mt-12 lg:mt-16 grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-10 w-full max-w-5xl mx-auto">
+                        {/* 175K+ Takipçi */}
+                        <div className="flex flex-col items-center text-center group/stat">
+                            <div className="mb-3 p-3 rounded-full bg-white/5 border border-white/10 group-hover/stat:border-[#d4af37]/50 transition-colors">
+                                <Users className="w-6 h-6 text-[#d4af37]" />
+                            </div>
+                            <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-1">175K+</span>
+                            <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-[0.1em] font-bold">Sosyal Medya Takipçisi</span>
                         </div>
-                        <div className="w-[1px] h-12 sm:h-16 bg-zinc-800"></div>
-                        <div className="flex flex-col items-center">
-                            <span className="text-3xl sm:text-4xl lg:text-6xl font-black text-white">50+</span>
-                            <span className="text-[10px] sm:text-xs lg:text-sm text-zinc-500 uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1 sm:mt-2 font-bold text-center">Geleneksel Tarif</span>
+
+                        {/* %98 Memnuniyet - 5 Yıldız */}
+                        <div className="flex flex-col items-center text-center group/stat">
+                            <div className="mb-3 flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star key={s} className="w-4 h-4 fill-[#d4af37] text-[#d4af37]" />
+                                ))}
+                            </div>
+                            <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-1">%98</span>
+                            <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-[0.1em] font-bold">Müşteri Memnuniyeti</span>
+                        </div>
+
+                        {/* 1M+ Mutlu Misafir */}
+                        <div className="flex flex-col items-center text-center group/stat">
+                            <div className="mb-3 p-3 rounded-full bg-white/5 border border-white/10 group-hover/stat:border-[#d4af37]/50 transition-colors">
+                                <Heart className="w-6 h-6 text-[#d4af37]" />
+                            </div>
+                            <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-1">1M+</span>
+                            <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-[0.1em] font-bold">Mutlu Misafir</span>
+                        </div>
+
+                        {/* Google Puanı - 5 Yıldız */}
+                        <div className="flex flex-col items-center text-center group/stat">
+                            <div className="mb-3 flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star key={s} className="w-4 h-4 fill-[#d4af37] text-[#d4af37]" />
+                                ))}
+                            </div>
+                            <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-1">4.9</span>
+                            <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-[0.1em] font-bold">Google Puanı</span>
+                        </div>
+
+                        {/* Alt Satır - Rozetler ve Ödüller */}
+                        <div className="col-span-2 lg:col-span-4 grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 border-t border-white/5 pt-8 mt-4 items-center">
+                            {/* Restaurant Guru */}
+                            <div className="flex flex-col items-center justify-center p-4 bg-white/5 rounded-xl border border-white/5 hover:border-[#d4af37]/30 transition-all group hover:bg-white/10">
+                                <div className="relative h-12 w-32 mb-2 grayscale group-hover:grayscale-0 transition-all duration-500">
+                                    <Image
+                                        src="/images/guru.png"
+                                        alt="Restaurant Guru"
+                                        fill
+                                        className="object-contain"
+                                        unoptimized
+                                    />
+                                </div>
+                                <span className="text-[9px] text-zinc-400 uppercase tracking-wider text-center">Restaurant Guru</span>
+                            </div>
+
+                            {/* Tripadvisor */}
+                            <div className="flex flex-col items-center justify-center p-4 bg-white/5 rounded-xl border border-white/5 hover:border-[#d4af37]/30 transition-all group hover:bg-white/10">
+                                <div className="relative h-12 w-32 mb-2 grayscale group-hover:grayscale-0 transition-all duration-500">
+                                    <Image
+                                        src="https://static.tacdn.com/img2/brand_refresh/Tripadvisor_lockup_horizontal_secondary_registered.svg"
+                                        alt="Tripadvisor"
+                                        fill
+                                        className="object-contain"
+                                        unoptimized
+                                    />
+                                </div>
+                                <span className="text-[9px] text-zinc-400 uppercase tracking-wider text-center">Mükemmellik Sertifikası</span>
+                            </div>
+
+                            {/* Turist Dostu - T.C. Kültür ve Turizm Bakanlığı */}
+                            <div className="flex flex-col items-center justify-center p-4 bg-white/5 rounded-xl border border-white/5 hover:border-[#d4af37]/30 transition-all group hover:bg-white/10">
+                                <div className="relative h-12 w-24 mb-2 grayscale group-hover:grayscale-0 transition-all duration-500">
+                                    <Image
+                                        src="/images/turist.png"
+                                        alt="Turist Dostu"
+                                        fill
+                                        className="object-contain"
+                                        unoptimized
+                                    />
+                                </div>
+                                <span className="text-[9px] text-zinc-400 uppercase tracking-wider text-center">Turist Dostu İşletme</span>
+                            </div>
+
+                            {/* Prestijli Ödüller - Generic Cup/Award */}
+                            <div className="flex flex-col items-center justify-center p-4 bg-white/5 rounded-xl border border-white/5 hover:border-[#d4af37]/30 transition-all group hover:bg-white/10">
+                                <div className="relative h-12 w-12 mb-2">
+                                    <Award className="w-full h-full text-[#d4af37] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
+                                </div>
+                                <span className="text-[9px] text-zinc-400 uppercase tracking-wider text-center font-bold">Prestijli Ödüller</span>
+                            </div>
                         </div>
                     </div>
-                    
+
                     {/* First Scroll Down Button - to Video Section */}
                     <div className="mt-8 sm:mt-10 lg:mt-12">
                         <ScrollDownButton targetId="ocakbasi-hikayeleri" light={true} />
