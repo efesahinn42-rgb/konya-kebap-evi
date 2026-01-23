@@ -34,7 +34,7 @@ export async function POST(request) {
 
         const validationResult = reservationSchema.safeParse(body);
         if (!validationResult.success) {
-            const errors = validationResult.error.errors.map(e => e.message);
+            const errors = validationResult.error.issues.map(e => e.message);
             return NextResponse.json(
                 {
                     success: false,
@@ -55,13 +55,13 @@ export async function POST(request) {
         let businessSmsResult = null;
         let smsError = null;
         let smsErrorCode = null;
-        
+
         try {
             businessSmsResult = await sendBusinessSMS({
                 ...data,
                 phone: formattedPhone
             });
-            
+
             if (businessSmsResult?.success) {
                 console.log('✅ Business SMS sent successfully:', {
                     campaignId: businessSmsResult.id?.substring(0, 20),
@@ -79,9 +79,9 @@ export async function POST(request) {
                 name: err.name,
                 // Don't log sensitive data
             });
-            
+
             smsError = err.message || 'SMS gönderiminde bir hata oluştu';
-            
+
             // Categorize error codes for better handling
             if (err.message?.includes('Kimlik doğrulama')) {
                 smsErrorCode = 'AUTH_ERROR';
@@ -94,7 +94,7 @@ export async function POST(request) {
             } else {
                 smsErrorCode = 'SMS_ERROR';
             }
-            
+
             // Continue to save reservation even if SMS fails
             // This is important - reservation should be saved regardless of SMS status
         }
