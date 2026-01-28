@@ -59,14 +59,22 @@ export default function AdminLayout({ children }) {
 
         const checkAuth = async () => {
             try {
+                // Check if supabase is initialized
+                if (!supabase) {
+                    console.error('Supabase not initialized');
+                    router.push('/admin/login');
+                    setLoading(false);
+                    return;
+                }
+
                 const { data: { session }, error } = await supabase.auth.getSession();
 
                 // Handle refresh token errors
                 if (error) {
-                    const isRefreshTokenError = error.message?.includes('Refresh Token') || 
-                                                error.message?.includes('refresh_token') ||
-                                                error.message?.includes('Invalid Refresh Token');
-                    
+                    const isRefreshTokenError = error.message?.includes('Refresh Token') ||
+                        error.message?.includes('refresh_token') ||
+                        error.message?.includes('Invalid Refresh Token');
+
                     if (isRefreshTokenError) {
                         await handleAuthError(error);
                         router.push('/admin/login');

@@ -258,7 +258,7 @@ SMS_SIMULATION_MODE=true
 ```
 
 ### Next.js Yapılandırması
-- **Image Domains:** `thehunger.com.tr`, `images.unsplash.com`
+- **Image Domains:** `images.unsplash.com`, `*.supabase.co`
 - **App Router:** Aktif
 - **React Compiler:** Aktif
 

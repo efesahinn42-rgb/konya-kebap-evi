@@ -50,7 +50,7 @@ export default function HeroSlider() {
     };
 
     const currentSlide = slides.length > 0 ? slides[currentIndex] : defaultSlide;
-
+    
     // Reset index when slides change
     useEffect(() => {
         if (slides.length > 0 && currentIndex >= slides.length) {
@@ -81,7 +81,7 @@ export default function HeroSlider() {
                             scale: { duration: 10, ease: 'easeInOut', times: [0, 0.5, 1] }
                         }}
                         className="absolute inset-0"
-                        style={{
+                        style={{ 
                             transformOrigin: 'left center',
                             willChange: 'transform, opacity'
                         }}
@@ -102,7 +102,17 @@ export default function HeroSlider() {
             {/* Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
 
-
+            {/* Content Overlay - Slogan at bottom */}
+            <div className="absolute inset-x-0 bottom-32 flex flex-col items-center text-center px-4">
+                <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                    className="text-lg sm:text-xl lg:text-2xl text-white/90 font-light tracking-[0.3em] uppercase"
+                >
+                    Şehrin Konsept Kebap Restoranı
+                </motion.p>
+            </div>
 
             {/* Navigation Arrows - Only show if more than 1 slide */}
             {slides.length > 1 && !loading && (

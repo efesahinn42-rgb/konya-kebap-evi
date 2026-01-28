@@ -1,0 +1,41 @@
+name: Deploy to Cenuta Server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🚀 Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            cd /var/www/konya-kebap-evi
+            
+            # Git'ten son değişiklikleri çek
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Node.js ortamını aktifleştir
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            # Bağımlılıkları yükle
+            npm ci
+            
+            # Production build al
+            npm run build
+            
+            # PM2 ile uygulamayı yeniden başlat
+            pm2 restart kebap-evi || pm2 start npm --name "kebap-evi" -- start
+            
+            echo "✅ Deployment completed successfully!"

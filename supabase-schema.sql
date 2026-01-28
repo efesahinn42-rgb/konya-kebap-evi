@@ -254,9 +254,14 @@ CREATE TABLE IF NOT EXISTS reservations (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Rezervasyonlar - RLS DEVRE DIŞI (public erişim için)
--- NOT: Bu tablo herkese açık insert izni verir
-ALTER TABLE reservations DISABLE ROW LEVEL SECURITY;
+-- Rezervasyonlar - RLS AKTİF
+ALTER TABLE reservations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "public_insert_reservations" ON reservations;
+DROP POLICY IF EXISTS "admin_all_reservations" ON reservations;
+-- Herkes yeni rezervasyon oluşturabilir (form gönderimi)
+CREATE POLICY "public_insert_reservations" ON reservations FOR INSERT TO anon, authenticated WITH CHECK (true);
+-- Authenticated users tüm rezervasyonları yönetebilir
+CREATE POLICY "admin_all_reservations" ON reservations FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Rezervasyon updated_at trigger
 CREATE OR REPLACE FUNCTION update_reservation_timestamp()
@@ -277,21 +282,24 @@ CREATE TRIGGER reservation_updated_at
 -- 13. Rezervasyon İstatistikleri View'ları
 -- =============================================
 
--- Bugünün rezervasyonları
-CREATE OR REPLACE VIEW today_reservations AS
+-- Bugünün rezervasyonları (SECURITY INVOKER)
+CREATE OR REPLACE VIEW today_reservations 
+WITH (security_invoker = true) AS
 SELECT * FROM reservations 
 WHERE date = CURRENT_DATE
 ORDER BY time ASC;
 
--- Bu haftanın rezervasyonları
-CREATE OR REPLACE VIEW weekly_reservations AS
+-- Bu haftanın rezervasyonları (SECURITY INVOKER)
+CREATE OR REPLACE VIEW weekly_reservations 
+WITH (security_invoker = true) AS
 SELECT * FROM reservations 
 WHERE date >= CURRENT_DATE 
   AND date < CURRENT_DATE + INTERVAL '7 days'
 ORDER BY date ASC, time ASC;
 
--- Günlük rezervasyon sayısı (son 30 gün)
-CREATE OR REPLACE VIEW daily_reservation_stats AS
+-- Günlük rezervasyon sayısı - son 30 gün (SECURITY INVOKER)
+CREATE OR REPLACE VIEW daily_reservation_stats 
+WITH (security_invoker = true) AS
 SELECT 
     date,
     COUNT(*) as total,
@@ -305,8 +313,9 @@ WHERE date >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY date
 ORDER BY date DESC;
 
--- Saatlik yoğunluk (bugün)
-CREATE OR REPLACE VIEW hourly_availability AS
+-- Saatlik yoğunluk - bugün (SECURITY INVOKER)
+CREATE OR REPLACE VIEW hourly_availability 
+WITH (security_invoker = true) AS
 SELECT 
     time,
     COUNT(*) as reservation_count

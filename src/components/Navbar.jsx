@@ -10,21 +10,16 @@ import {
     Images, Award, Newspaper, Heart, Users, Phone
 } from 'lucide-react';
 
-const leftMenuItems = [
+const menuItems = [
     { label: 'ANA SAYFA', href: '/', isPage: true, icon: Home },
     { label: 'HAKKIMIZDA', href: '/#about', isPage: false, icon: Info },
     { label: 'MENÜMÜZ', href: '/menu', isPage: true, icon: UtensilsCrossed },
     { label: 'REZERVASYON', href: '/#reservation', isPage: false, icon: CalendarCheck },
-];
-
-const rightMenuItems = [
     { label: 'MİSAFİRLERİMİZ', href: '/#gallery', isPage: false, icon: Images },
     { label: 'ÖDÜLLERİMİZ', href: '/#awards', isPage: false, icon: Award },
     { label: 'BASINDA BİZ', href: '/#press', isPage: false, icon: Newspaper },
     { label: 'İLETİŞİM', href: '/#contact', isPage: false, icon: Phone },
 ];
-
-const menuItems = [...leftMenuItems, ...rightMenuItems];
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -77,7 +72,7 @@ export default function Navbar() {
             const visibleSections = sections.filter(id => {
                 const element = document.getElementById(id);
                 if (!element) return false;
-
+                
                 const rect = element.getBoundingClientRect();
                 const isVisible = rect.top < window.innerHeight * 0.3 && rect.bottom > 0;
                 return isVisible;
@@ -162,7 +157,7 @@ export default function Navbar() {
                 if (element) {
                     const rect = element.getBoundingClientRect();
                     const distance = Math.abs(rect.top - 100); // Navbar yüksekliği + offset
-
+                    
                     // Section görünür alanda ve en yakınsa
                     if (rect.top <= window.innerHeight * 0.3 && rect.bottom > 0 && distance < minDistance) {
                         minDistance = distance;
@@ -189,11 +184,11 @@ export default function Navbar() {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setCurrentHash(window.location.hash);
-
+            
             const handleHashChange = () => {
                 setCurrentHash(window.location.hash);
             };
-
+            
             window.addEventListener('hashchange', handleHashChange);
             return () => window.removeEventListener('hashchange', handleHashChange);
         }
@@ -244,7 +239,7 @@ export default function Navbar() {
         // Hash link ise
         if (item.href.startsWith('/#')) {
             const hash = item.href.split('#')[1];
-
+            
             // Ana sayfadaysak direkt scroll et
             if (pathname === '/') {
                 const element = document.getElementById(hash);
@@ -261,7 +256,7 @@ export default function Navbar() {
     const handleHomePageClick = (e) => {
         e.preventDefault();
         setMobileMenuOpen(false);
-
+        
         if (pathname === '/') {
             // Zaten ana sayfadaysak en başa scroll et
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -276,122 +271,112 @@ export default function Navbar() {
 
     return (
         <>
-            {/* Navbar - Hero içinde serbest konumda, scroll sonrası sticky */}
+            {/* Navbar */}
             <motion.header
-                className={`fixed z-50 transition-all duration-500 ${isScrolled
-                    ? 'top-0 left-0 right-0 bg-black/95 backdrop-blur-md shadow-lg'
-                    : 'top-[72%] left-0 right-0 -translate-y-1/2 bg-transparent'
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+                    ? 'bg-black/95 backdrop-blur-md shadow-lg'
+                    : 'bg-gradient-to-b from-black/80 to-transparent'
                     }`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
                 transition={{ duration: 0.5 }}
-                style={{ willChange: 'transform, top' }}
+                style={{ willChange: 'transform' }}
             >
-                <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${isScrolled ? 'max-w-7xl' : 'w-full'}`}>
-                    <div className={`relative ${isScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-auto'}`}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-center h-16 lg:h-20">
 
-                        {/* Desktop Menu */}
-                        <div className="hidden lg:block w-full">
-                            {isScrolled ? (
-                                /* Scrolled: Unified Horizontal Menu */
-                                <nav className="flex flex-row items-center justify-center gap-6">
-                                    {menuItems.map((item, index) => {
-                                        let isActive = false;
-                                        if (item.isPage) {
-                                            isActive = item.href === '/' ? (pathname === '/' && activeSection === '') : (pathname === item.href);
-                                        } else {
-                                            const hashName = item.href.split('#')[1];
-                                            isActive = pathname === '/' && activeSection === hashName;
-                                        }
+                        {/* Desktop Menu - Centered */}
+                        <nav className="hidden lg:flex items-center">
+                            {menuItems.map((item, index) => {
+                                // Aktif durum kontrolü - scroll pozisyonuna göre
+                                let isActive = false;
+                                
+                                if (item.isPage) {
+                                    // Sayfa linkleri için
+                                    if (item.href === '/') {
+                                        // Ana sayfa: en üstteyken veya aktif section yokken aktif
+                                        isActive = pathname === '/' && (activeSection === '' || scrollY < 100);
+                                    } else {
+                                        // Diğer sayfa linkleri
+                                        isActive = pathname === item.href;
+                                    }
+                                } else {
+                                    // Hash linkler için
+                                    if (pathname === '/') {
+                                        const hashName = item.href.split('#')[1];
+                                        isActive = activeSection === hashName;
+                                    } else {
+                                        isActive = false;
+                                    }
+                                }
+                                
+                                const isLast = index === menuItems.length - 1;
 
-                                        const menuItemClass = `relative text-[16px] font-semibold tracking-[0.12em] transition-all duration-300 ${isActive ? 'text-[#d4af37]' : 'text-white/90 hover:text-[#d4af37]'} group py-2 px-4 whitespace-nowrap`;
-                                        const underlineClass = `absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-[#d4af37] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`;
-                                        const IconComponent = item.icon;
-                                        const content = (
-                                            <span className="flex items-center gap-2">
-                                                {item.label}
-                                                <IconComponent className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#d4af37]" />
-                                                <span className={underlineClass} />
-                                            </span>
+                                const menuItemClass = `
+                                    relative text-[13px] font-semibold tracking-[0.12em] transition-all duration-300
+                                    ${isActive ? 'text-[#d4af37]' : 'text-white/90 hover:text-[#d4af37]'}
+                                    group py-2 px-4 whitespace-nowrap
+                                `;
+
+                                const underlineClass = `
+                                    absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-[#d4af37] 
+                                    transition-all duration-300 
+                                    ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}
+                                `;
+
+                                const IconComponent = item.icon;
+
+                                const content = (
+                                    <span className="flex items-center gap-2">
+                                        {item.label}
+                                        <IconComponent className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#d4af37]" />
+                                        <span className={underlineClass} />
+                                    </span>
+                                );
+
+                                if (item.isPage) {
+                                    // Ana sayfa linki için özel handler
+                                    if (item.href === '/') {
+                                        return (
+                                            <div key={item.label} className="flex items-center">
+                                                <a 
+                                                    href={item.href}
+                                                    onClick={handleHomePageClick}
+                                                    className={menuItemClass}
+                                                >
+                                                    {content}
+                                                </a>
+                                                {!isLast && <span className="text-[#d4af37]/30 mx-1">•</span>}
+                                            </div>
                                         );
+                                    }
+                                    
+                                    // Diğer sayfa linkleri
+                                    return (
+                                        <div key={item.label} className="flex items-center">
+                                            <Link href={item.href} className={menuItemClass}>
+                                                {content}
+                                            </Link>
+                                            {!isLast && <span className="text-[#d4af37]/30 mx-1">•</span>}
+                                        </div>
+                                    );
+                                }
 
-                                        if (item.isPage && item.href === '/') {
-                                            return <a key={item.label} href={item.href} onClick={handleHomePageClick} className={menuItemClass}>{content}</a>;
-                                        } else if (item.isPage) {
-                                            return <Link key={item.label} href={item.href} className={menuItemClass}>{content}</Link>;
-                                        }
-                                        return <button key={item.label} onClick={() => handleLinkClick(item)} className={menuItemClass}>{content}</button>;
-                                    })}
-                                </nav>
-                            ) : (
-                                /* Not Scrolled: Split Vertical Menus */
-                                <>
-                                    {/* Left Menu */}
-                                    <nav className="absolute left-[380px] top-1/2 -translate-y-1/2 flex flex-col items-start gap-2">
-                                        {leftMenuItems.map((item) => {
-                                            let isActive = false;
-                                            if (item.isPage) {
-                                                isActive = item.href === '/' ? (pathname === '/' && activeSection === '') : (pathname === item.href);
-                                            } else {
-                                                const hashName = item.href.split('#')[1];
-                                                isActive = pathname === '/' && activeSection === hashName;
-                                            }
+                                return (
+                                    <div key={item.label} className="flex items-center">
+                                        <button
+                                            onClick={() => handleLinkClick(item)}
+                                            className={menuItemClass}
+                                        >
+                                            {content}
+                                        </button>
+                                        {!isLast && <span className="text-[#d4af37]/30 mx-1">•</span>}
+                                    </div>
+                                );
+                            })}
+                        </nav>
 
-                                            const menuItemClass = `relative text-[16px] font-semibold tracking-[0.12em] transition-all duration-300 ${isActive ? 'text-[#d4af37]' : 'text-white/90 hover:text-[#d4af37]'} group py-2 px-4 whitespace-nowrap`;
-                                            const underlineClass = `absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-[#d4af37] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`;
-                                            const IconComponent = item.icon;
-                                            const content = (
-                                                <span className="flex items-center gap-2">
-                                                    {item.label}
-                                                    <IconComponent className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#d4af37]" />
-                                                    <span className={underlineClass} />
-                                                </span>
-                                            );
-
-                                            if (item.isPage && item.href === '/') {
-                                                return <a key={item.label} href={item.href} onClick={handleHomePageClick} className={menuItemClass}>{content}</a>;
-                                            } else if (item.isPage) {
-                                                return <Link key={item.label} href={item.href} className={menuItemClass}>{content}</Link>;
-                                            }
-                                            return <button key={item.label} onClick={() => handleLinkClick(item)} className={menuItemClass}>{content}</button>;
-                                        })}
-                                    </nav>
-
-                                    {/* Right Menu */}
-                                    <nav className="absolute right-[300px] top-1/2 -translate-y-1/2 flex flex-col items-start gap-2">
-                                        {rightMenuItems.map((item) => {
-                                            let isActive = false;
-                                            if (item.isPage) {
-                                                isActive = item.href === '/' ? (pathname === '/' && activeSection === '') : (pathname === item.href);
-                                            } else {
-                                                const hashName = item.href.split('#')[1];
-                                                isActive = pathname === '/' && activeSection === hashName;
-                                            }
-
-                                            const menuItemClass = `relative text-[16px] font-semibold tracking-[0.12em] transition-all duration-300 ${isActive ? 'text-[#d4af37]' : 'text-white/90 hover:text-[#d4af37]'} group py-2 px-4 whitespace-nowrap`;
-                                            const underlineClass = `absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-[#d4af37] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`;
-                                            const IconComponent = item.icon;
-                                            const content = (
-                                                <span className="flex items-center gap-2">
-                                                    {item.label}
-                                                    <IconComponent className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#d4af37]" />
-                                                    <span className={underlineClass} />
-                                                </span>
-                                            );
-
-                                            if (item.isPage && item.href === '/') {
-                                                return <a key={item.label} href={item.href} onClick={handleHomePageClick} className={menuItemClass}>{content}</a>;
-                                            } else if (item.isPage) {
-                                                return <Link key={item.label} href={item.href} className={menuItemClass}>{content}</Link>;
-                                            }
-                                            return <button key={item.label} onClick={() => handleLinkClick(item)} className={menuItemClass}>{content}</button>;
-                                        })}
-                                    </nav>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Mobile Menu Button - Kept same */}
+                        {/* Mobile Menu Button */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="lg:hidden absolute right-4 w-10 h-10 flex items-center justify-center text-white"
@@ -425,7 +410,7 @@ export default function Navbar() {
                                 {menuItems.map((item, index) => {
                                     // Mobile menu için aktif durum kontrolü
                                     let isActive = false;
-
+                                    
                                     if (item.isPage) {
                                         if (item.href === '/') {
                                             isActive = pathname === '/' && (activeSection === '' || scrollY < 100);
@@ -456,10 +441,11 @@ export default function Navbar() {
                                                             handleHomePageClick(e);
                                                             setMobileMenuOpen(false);
                                                         }}
-                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
-                                                            ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                            : 'text-white hover:text-[#d4af37]'
-                                                            }`}
+                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${
+                                                            isActive 
+                                                                ? 'text-[#d4af37] underline decoration-2 underline-offset-4' 
+                                                                : 'text-white hover:text-[#d4af37]'
+                                                        }`}
                                                     >
                                                         {item.label}
                                                     </a>
@@ -467,10 +453,11 @@ export default function Navbar() {
                                                     <Link
                                                         href={item.href}
                                                         onClick={() => setMobileMenuOpen(false)}
-                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
-                                                            ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                            : 'text-white hover:text-[#d4af37]'
-                                                            }`}
+                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${
+                                                            isActive 
+                                                                ? 'text-[#d4af37] underline decoration-2 underline-offset-4' 
+                                                                : 'text-white hover:text-[#d4af37]'
+                                                        }`}
                                                     >
                                                         {item.label}
                                                     </Link>
@@ -478,10 +465,11 @@ export default function Navbar() {
                                             ) : (
                                                 <button
                                                     onClick={() => handleLinkClick(item)}
-                                                    className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
-                                                        ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                        : 'text-white hover:text-[#d4af37]'
-                                                        }`}
+                                                    className={`text-xl font-bold tracking-[0.2em] transition-colors ${
+                                                        isActive 
+                                                            ? 'text-[#d4af37] underline decoration-2 underline-offset-4' 
+                                                            : 'text-white hover:text-[#d4af37]'
+                                                    }`}
                                                 >
                                                     {item.label}
                                                 </button>
