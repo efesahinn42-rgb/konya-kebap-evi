@@ -384,6 +384,6 @@ Proje hakkında sorularınız için:
 
 ---
 
-**Son Güncelleme:** 2024  
+**Son Güncelleme:** 2026 
 **Versiyon:** 0.1.0  
 **Durum:** Aktif Geliştirme

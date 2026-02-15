@@ -274,11 +274,16 @@ export default function Navbar() {
         }
     };
 
+    // Check if we are on the homepage
+    const isHomePage = pathname === '/';
+    // Force scrolled state (top aligned, dark bg) if not on homepage, otherwise use scroll position
+    const shouldShowScrolled = !isHomePage || isScrolled;
+
     return (
         <>
             {/* Navbar - Hero içinde serbest konumda, scroll sonrası sticky */}
             <motion.header
-                className={`fixed z-50 transition-all duration-500 ${isScrolled
+                className={`fixed z-50 transition-all duration-500 ${shouldShowScrolled
                     ? 'top-0 left-0 right-0 bg-black/95 backdrop-blur-md shadow-lg'
                     : 'top-[72%] left-0 right-0 -translate-y-1/2 bg-transparent'
                     }`}
@@ -287,12 +292,12 @@ export default function Navbar() {
                 transition={{ duration: 0.5 }}
                 style={{ willChange: 'transform, top' }}
             >
-                <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${isScrolled ? 'max-w-7xl' : 'w-full'}`}>
-                    <div className={`relative ${isScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-auto'}`}>
+                <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${shouldShowScrolled ? 'max-w-7xl' : 'w-full'}`}>
+                    <div className={`relative ${shouldShowScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-auto'}`}>
 
                         {/* Desktop Menu */}
                         <div className="hidden lg:block w-full">
-                            {isScrolled ? (
+                            {shouldShowScrolled ? (
                                 /* Scrolled: Unified Horizontal Menu */
                                 <nav className="flex flex-row items-center justify-center gap-6">
                                     {menuItems.map((item, index) => {
