@@ -285,7 +285,7 @@ export default function Navbar() {
             <motion.header
                 className={`fixed z-50 transition-all duration-500 ${shouldShowScrolled
                     ? 'top-0 left-0 right-0 bg-black/95 backdrop-blur-md shadow-lg'
-                    : 'top-[72%] left-0 right-0 -translate-y-1/2 bg-transparent'
+                    : 'top-0 lg:top-[72%] left-0 right-0 lg:-translate-y-1/2 bg-black/80 lg:bg-transparent'
                     }`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

@@ -59,7 +59,7 @@ export default function HeroSlider() {
     }, [slides.length, currentIndex]);
 
     return (
-        <section id="hero" className="relative w-full h-[60vh] sm:h-[70vh] md:h-screen overflow-hidden bg-black">
+        <section id="hero" className="relative w-full h-screen overflow-hidden bg-black">
 
             {/* Fullscreen Background with Zoom Animation */}
             {loading ? (
@@ -91,7 +91,7 @@ export default function HeroSlider() {
                             alt={currentSlide.alt_text || 'Konya Kebap Evi'}
                             fill
                             priority={currentIndex === 0}
-                            className="object-cover object-center"
+                            className="object-contain md:object-cover object-center"
                             sizes="100vw"
                             quality={90}
                         />
