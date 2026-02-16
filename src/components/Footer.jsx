@@ -56,8 +56,8 @@ export default function Footer() {
                             {quickLinks.map((link) => (
                                 <li key={link.name}>
                                     {link.isPage ? (
-                                        <Link 
-                                            href={link.href} 
+                                        <Link
+                                            href={link.href}
                                             target={link.openInNewTab ? '_blank' : undefined}
                                             rel={link.openInNewTab ? 'noopener noreferrer' : undefined}
                                             className="text-xs sm:text-[13px] text-zinc-400 hover:text-[#d4af37] transition-colors tracking-widest font-medium"
@@ -129,7 +129,13 @@ export default function Footer() {
                 </div>
 
                 <div className="flex flex-col lg:flex-row justify-between items-center pt-6 sm:pt-8 lg:pt-[30px] border-t border-zinc-800 gap-4 sm:gap-[15px] lg:gap-0 text-center lg:text-left">
-                    <p className="text-[10px] sm:text-xs text-zinc-600 font-medium tracking-widest">© 2024 KONYA KEBAP EVİ. TÜM HAKLARI SAKLIDIR.</p>
+                    <p className="text-[10px] sm:text-xs text-zinc-600 font-medium tracking-widest">
+                        © 2026 KONYA KEBAP EVİ. TÜM HAKLARI SAKLIDIR.
+                        <span className="hidden sm:inline mx-2">|</span>
+                        <span className="block sm:inline mt-1 sm:mt-0">
+                            DESIGNED BY <a href="https://www.medyablack.com/" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-[#d4af37] transition-colors font-bold">MEDYABLACK</a>
+                        </span>
+                    </p>
                     <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
                         {['Gizlilik Politikası', 'Kullanım Şartları', 'KVKK'].map(text => (
                             <a key={text} href="#" className="text-[9px] sm:text-[10px] text-zinc-600 hover:text-[#d4af37] transition-colors font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase">
