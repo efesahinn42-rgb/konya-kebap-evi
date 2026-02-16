@@ -1,17 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
-const fallbackData = [
-  {
-    id: 1,
-    title: 'Kebap Çeşitleri',
-    icon: '🍖',
-    items: [
-      { name: 'Adana Kebap', price: '150.00', description: 'Acılı kıyma kebap', image: null },
-      { name: 'Urfa Kebap', price: '150.00', description: 'Acısız kıyma kebap', image: null },
-    ]
-  }
-];
+const fallbackData = [];
 
 export function useMenuData() {
   return useQuery({
