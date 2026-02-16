@@ -24,11 +24,18 @@ export async function checkRateLimit(ip) {
         return { success: true, limit: 0, remaining: 0, reset: 0 };
     }
 
-    const result = await ratelimit.limit(ip);
+    try {
+        const result = await ratelimit.limit(ip);
 
-    if (!result.success) {
-        console.warn(`🚫 Rate limit exceeded for IP: ${ip}`);
+        if (!result.success) {
+            console.warn(`🚫 Rate limit exceeded for IP: ${ip}`);
+        }
+
+        return result;
+    } catch (error) {
+        // If Redis is unreachable (DNS error, network issue, etc.),
+        // allow the request through instead of blocking users
+        console.warn('⚠️ Rate limit check failed (Redis unreachable), allowing request:', error.message);
+        return { success: true, limit: 0, remaining: 0, reset: 0 };
     }
-
-    return result;
 }
