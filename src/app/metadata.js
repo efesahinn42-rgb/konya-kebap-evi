@@ -8,18 +8,31 @@ export const defaultMetadata = {
     type: 'website',
     locale: 'tr_TR',
     siteName: 'Konya Kebap Evi',
+    images: [
+      {
+        url: '/favicon-square.png',
+        width: 470,
+        height: 470,
+        alt: 'Konya Kebap Evi Logo',
+      },
+    ],
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
     title: 'Konya Kebap Evi | Lezzet Mirası',
     description: 'Konya Kebap Evi - Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
+    images: ['/favicon-square.png'],
   },
   robots: {
     index: true,
     follow: true,
   },
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: [
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/apple-icon.png',
+    shortcut: '/favicon-32.png',
   },
 };

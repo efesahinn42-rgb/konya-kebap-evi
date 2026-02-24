@@ -15,7 +15,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="tr" data-scroll-behavior="smooth" className={montserrat.variable}>
       <head>
-        <link rel="icon" href="/logo.png" />
+        <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
       </head>
       <body suppressHydrationWarning>
         <ReactQueryProvider>
