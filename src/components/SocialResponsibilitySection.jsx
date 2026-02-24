@@ -1,5 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Heart, Utensils } from 'lucide-react';
 import { useSocialProjects } from '@/hooks/useSocialProjects';
 import ScrollDownButton from './ScrollDownButton';
@@ -94,10 +95,12 @@ export default function SocialResponsibilitySection() {
                                 className="group relative overflow-hidden rounded-2xl sm:rounded-3xl aspect-[4/3] cursor-pointer"
                             >
                                 {/* Image */}
-                                <img
+                                <Image
                                     src={item.image}
                                     alt={item.title}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover group-hover:scale-110 transition-transform duration-700"
                                 />
 
                                 {/* Overlay */}

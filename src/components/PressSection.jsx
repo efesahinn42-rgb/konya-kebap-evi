@@ -1,5 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Newspaper, ExternalLink, Calendar } from 'lucide-react';
 import { usePressItems } from '@/hooks/usePressItems';
 import ScrollDownButton from './ScrollDownButton';
@@ -97,10 +98,12 @@ export default function PressSection() {
                                     {/* Image */}
                                     <div className="relative h-48 overflow-hidden">
                                         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10" />
-                                        <img
+                                        <Image
                                             src={item.image_url || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=800'}
                                             alt={item.title}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                            className="object-cover group-hover:scale-110 transition-transform duration-700"
                                         />
                                         <div 
                                             className="absolute top-4 right-4 z-20 text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider"

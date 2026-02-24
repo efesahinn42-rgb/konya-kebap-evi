@@ -108,17 +108,14 @@ export default function ReservationsPage() {
             setReservations(filtered);
             setAllReservations(data || []);
 
-            // Calculate stats
-            const allData = await supabase.from('reservations').select('*');
-            if (allData.data) {
-                const all = allData.data;
-                setStats({
-                    total: all.length,
-                    pending: all.filter(r => r.status === 'pending').length,
-                    confirmed: all.filter(r => r.status === 'confirmed').length,
-                    today: all.filter(r => r.date === today).length
-                });
-            }
+            // Calculate stats from already-fetched data (no extra query needed)
+            const all = data || [];
+            setStats({
+                total: all.length,
+                pending: all.filter(r => r.status === 'pending').length,
+                confirmed: all.filter(r => r.status === 'confirmed').length,
+                today: all.filter(r => r.date === today).length
+            });
         } catch (err) {
             console.error('Error fetching reservations:', err);
             showError('Rezervasyonlar yüklenirken hata oluştu');

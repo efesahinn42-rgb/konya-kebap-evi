@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { ChevronDown } from 'lucide-react';
 import { useMenuData } from '@/hooks/useMenuData';
 import Navbar from '@/components/Navbar';
@@ -74,10 +75,12 @@ const MenuCard = ({ item }) => (
         whileHover={{ y: -5 }}
     >
         <div className="relative aspect-[4/3] overflow-hidden">
-            <img
+            <Image
                 src={item.image}
                 alt={item.name}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-500"
             />
             <div className="absolute top-3 right-3 px-3 py-1.5 bg-[#d4af37] text-black font-black text-sm rounded-full shadow-lg">
                 {item.price} ₺
