@@ -112,23 +112,27 @@ export default function PressManagement() {
                     .update(saveData)
                     .eq('id', editingItem.id);
                 if (error) throw error;
+                setItems(prev => prev.map(i => i.id === editingItem.id ? { ...i, ...saveData } : i));
             } else {
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('press_items')
                     .insert({
                         ...saveData,
                         display_order: items.length,
                         is_active: true
-                    });
+                    })
+                    .select()
+                    .single();
                 if (error) throw error;
+                if (data) setItems(prev => [...prev, data]);
             }
-            await fetchItems();
             setShowModal(false);
             resetForm();
             success(editingItem ? 'İçerik güncellendi' : 'İçerik eklendi');
         } catch (err) {
             console.error('Error saving item:', err);
             showError('Kaydetme sırasında bir hata oluştu');
+            fetchItems();
         }
         setSaving(false);
     };
@@ -147,26 +151,28 @@ export default function PressManagement() {
                 .eq('id', deleteConfirm.id);
 
             if (error) throw error;
-            await fetchItems();
+            setItems(prev => prev.filter(i => i.id !== deleteConfirm.id));
             success('İçerik başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
             showError('Silme işlemi başarısız');
+            fetchItems();
         } finally {
             setDeleteConfirm(null);
         }
     };
 
     const handleToggleActive = async (item) => {
+        setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
         try {
             const { error } = await supabase
                 .from('press_items')
                 .update({ is_active: !item.is_active })
                 .eq('id', item.id);
             if (error) throw error;
-            await fetchItems();
         } catch (err) {
             console.error('Error updating item:', err);
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: item.is_active } : i));
         }
     };
 

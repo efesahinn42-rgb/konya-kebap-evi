@@ -60,7 +60,7 @@ export default function GalleryManagement() {
                 return;
             }
 
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('gallery_items')
                 .insert({
                     category: newItem.category,
@@ -68,10 +68,12 @@ export default function GalleryManagement() {
                     alt_text: newItem.alt_text || (newItem.category === 'misafir' ? 'Misafirlerimiz' : 'İmza Lezzet'),
                     display_order: items.length,
                     is_active: true
-                });
+                })
+                .select()
+                .single();
 
             if (error) throw error;
-            await fetchItems();
+            if (data) setItems(prev => [...prev, data]);
             setShowModal(false);
             resetForm();
             success('Görsel başarıyla eklendi');
@@ -102,17 +104,19 @@ export default function GalleryManagement() {
                 .eq('id', deleteConfirm.id);
 
             if (error) throw error;
-            await fetchItems();
+            setItems(prev => prev.filter(i => i.id !== deleteConfirm.id));
             success('Görsel başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
             showError('Görsel silinirken bir hata oluştu');
+            fetchItems();
         } finally {
             setDeleteConfirm(null);
         }
     };
 
     const handleToggleActive = async (item) => {
+        setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
         try {
             const { error } = await supabase
                 .from('gallery_items')
@@ -120,9 +124,9 @@ export default function GalleryManagement() {
                 .eq('id', item.id);
 
             if (error) throw error;
-            await fetchItems();
         } catch (err) {
             console.error('Error updating item:', err);
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: item.is_active } : i));
         }
     };
 

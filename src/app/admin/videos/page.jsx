@@ -76,19 +76,21 @@ export default function VideosManagement() {
                 return;
             }
 
-            const { error } = await supabase
-                .from('ocakbasi_videos')
-                .insert({
-                    title: newVideo.title,
-                    video_url: videoUrl,
-                    thumbnail_url: newVideo.thumbnail_url || null,
-                    is_background: newVideo.is_background,
-                    is_modal: newVideo.is_modal,
-                    is_active: true
-                });
+            const { data, error } = await supabase
+            .from('ocakbasi_videos')
+            .insert({
+                title: newVideo.title,
+                video_url: videoUrl,
+                thumbnail_url: newVideo.thumbnail_url || null,
+                is_background: newVideo.is_background,
+                is_modal: newVideo.is_modal,
+                is_active: true
+            })
+            .select()
+            .single();
 
             if (error) throw error;
-            await fetchVideos();
+            if (data) setVideos(prev => [data, ...prev]);
             setShowModal(false);
             resetForm();
             success('Video başarıyla eklendi');
@@ -126,17 +128,19 @@ export default function VideosManagement() {
                 .eq('id', deleteConfirm.id);
 
             if (error) throw error;
-            await fetchVideos();
+            setVideos(prev => prev.filter(v => v.id !== deleteConfirm.id));
             success('Video başarıyla silindi');
         } catch (err) {
             console.error('Error deleting video:', err);
             showError('Video silinirken bir hata oluştu');
+            fetchVideos();
         } finally {
             setDeleteConfirm(null);
         }
     };
 
     const handleToggleActive = async (video) => {
+        setVideos(prev => prev.map(v => v.id === video.id ? { ...v, is_active: !v.is_active } : v));
         try {
             const { error } = await supabase
                 .from('ocakbasi_videos')
@@ -144,9 +148,9 @@ export default function VideosManagement() {
                 .eq('id', video.id);
 
             if (error) throw error;
-            await fetchVideos();
         } catch (err) {
             console.error('Error updating video:', err);
+            setVideos(prev => prev.map(v => v.id === video.id ? { ...v, is_active: video.is_active } : v));
         }
     };
 

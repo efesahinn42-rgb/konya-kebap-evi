@@ -78,22 +78,26 @@ export default function AwardsManagement() {
                     .update(formData)
                     .eq('id', editingAward.id);
                 if (error) throw error;
+                setAwards(prev => prev.map(a => a.id === editingAward.id ? { ...a, ...formData } : a));
             } else {
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('awards')
                     .insert({
                         ...formData,
                         display_order: awards.length,
                         is_active: true
-                    });
+                    })
+                    .select()
+                    .single();
                 if (error) throw error;
+                if (data) setAwards(prev => [...prev, data]);
             }
-            await fetchAwards();
             setShowModal(false);
             success(editingAward ? 'Ödül güncellendi' : 'Ödül eklendi');
         } catch (err) {
             console.error('Error saving award:', err);
             showError('Ödül kaydedilirken bir hata oluştu');
+            fetchAwards();
         }
         setSaving(false);
     };
@@ -111,26 +115,28 @@ export default function AwardsManagement() {
                 .delete()
                 .eq('id', deleteConfirm.id);
             if (error) throw error;
-            await fetchAwards();
+            setAwards(prev => prev.filter(a => a.id !== deleteConfirm.id));
             success('Ödül başarıyla silindi');
         } catch (err) {
             console.error('Error deleting award:', err);
             showError('Ödül silinirken bir hata oluştu');
+            fetchAwards();
         } finally {
             setDeleteConfirm(null);
         }
     };
 
     const handleToggleActive = async (award) => {
+        setAwards(prev => prev.map(a => a.id === award.id ? { ...a, is_active: !a.is_active } : a));
         try {
             const { error } = await supabase
                 .from('awards')
                 .update({ is_active: !award.is_active })
                 .eq('id', award.id);
             if (error) throw error;
-            await fetchAwards();
         } catch (err) {
             console.error('Error updating award:', err);
+            setAwards(prev => prev.map(a => a.id === award.id ? { ...a, is_active: award.is_active } : a));
         }
     };
 

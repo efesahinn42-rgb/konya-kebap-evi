@@ -90,22 +90,26 @@ export default function MenuManagement() {
                     .update(categoryForm)
                     .eq('id', editingCategory.id);
                 if (error) throw error;
+                setCategories(prev => prev.map(c => c.id === editingCategory.id ? { ...c, ...categoryForm } : c));
             } else {
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('menu_categories')
                     .insert({
                         ...categoryForm,
                         display_order: categories.length,
                         is_active: true
-                    });
+                    })
+                    .select()
+                    .single();
                 if (error) throw error;
+                if (data) setCategories(prev => [...prev, data]);
             }
-            await fetchCategories();
             setShowCategoryModal(false);
             success(editingCategory ? 'Kategori güncellendi' : 'Kategori eklendi');
         } catch (err) {
             console.error('Error saving category:', err);
             showError('Kategori kaydedilirken bir hata oluştu');
+            fetchCategories();
         }
         setSaving(false);
     };
@@ -128,26 +132,28 @@ export default function MenuManagement() {
                 setSelectedCategory(null);
                 setItems([]);
             }
-            await fetchCategories();
+            setCategories(prev => prev.filter(c => c.id !== deleteCategoryConfirm.id));
             success('Kategori ve içindeki tüm yemekler silindi');
         } catch (err) {
             console.error('Error deleting category:', err);
             showError('Kategori silinirken bir hata oluştu');
+            fetchCategories();
         } finally {
             setDeleteCategoryConfirm(null);
         }
     };
 
     const toggleCategoryActive = async (category) => {
+        setCategories(prev => prev.map(c => c.id === category.id ? { ...c, is_active: !c.is_active } : c));
         try {
             const { error } = await supabase
                 .from('menu_categories')
                 .update({ is_active: !category.is_active })
                 .eq('id', category.id);
             if (error) throw error;
-            await fetchCategories();
         } catch (err) {
             console.error('Error updating category:', err);
+            setCategories(prev => prev.map(c => c.id === category.id ? { ...c, is_active: category.is_active } : c));
         }
     };
 
@@ -256,26 +262,28 @@ export default function MenuManagement() {
                 .delete()
                 .eq('id', deleteItemConfirm.id);
             if (error) throw error;
-            await fetchItems(selectedCategory.id);
+            setItems(prev => prev.filter(i => i.id !== deleteItemConfirm.id));
             success('Yemek başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
             showError('Yemek silinirken bir hata oluştu');
+            fetchItems(selectedCategory.id);
         } finally {
             setDeleteItemConfirm(null);
         }
     };
 
     const toggleItemActive = async (item) => {
+        setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
         try {
             const { error } = await supabase
                 .from('menu_items')
                 .update({ is_active: !item.is_active })
                 .eq('id', item.id);
             if (error) throw error;
-            await fetchItems(selectedCategory.id);
         } catch (err) {
             console.error('Error updating item:', err);
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: item.is_active } : i));
         }
     };
 
