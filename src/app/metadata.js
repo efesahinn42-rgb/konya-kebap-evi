@@ -1,5 +1,8 @@
 export const defaultMetadata = {
   metadataBase: new URL('https://konyakebapevi.com'),
+  alternates: {
+    canonical: '/',
+  },
   title: 'Konya Kebap Evi | Lezzet Mirası',
   description: 'Konya Kebap Evi - Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
   keywords: 'konya kebap evi, etliekmek, kebap, konya mutfağı, restoran, yemek',
