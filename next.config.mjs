@@ -24,8 +24,18 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/tr/menu',
+        destination: '/menu',
+        permanent: true,
+      },
+      {
         source: '/public/tr/menu',
         destination: '/menu',
+        permanent: true,
+      },
+      {
+        source: '/tr/:path*',
+        destination: '/',
         permanent: true,
       },
     ]
