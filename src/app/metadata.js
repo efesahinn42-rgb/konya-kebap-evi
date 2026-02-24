@@ -1,4 +1,5 @@
 export const defaultMetadata = {
+  metadataBase: new URL('https://konyakebapevi.com'),
   title: 'Konya Kebap Evi | Lezzet Mirası',
   description: 'Konya Kebap Evi - Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
   keywords: 'konya kebap evi, etliekmek, kebap, konya mutfağı, restoran, yemek',
@@ -10,8 +11,8 @@ export const defaultMetadata = {
     siteName: 'Konya Kebap Evi',
     images: [
       {
-        url: '/favicon-square.png',
-        width: 470,
+        url: '/logo.png',
+        width: 1928,
         height: 470,
         alt: 'Konya Kebap Evi Logo',
       },
@@ -21,7 +22,7 @@ export const defaultMetadata = {
     card: 'summary',
     title: 'Konya Kebap Evi | Lezzet Mirası',
     description: 'Konya Kebap Evi - Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
-    images: ['/favicon-square.png'],
+    images: ['/logo.png'],
   },
   robots: {
     index: true,
