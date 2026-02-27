@@ -20,7 +20,7 @@ export function usePressItems() {
 
       const { data, error } = await supabase
         .from('press_items')
-        .select('*')
+        .select('id, outlet, external_url, quote, color, published_at, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -37,6 +37,6 @@ export function usePressItems() {
         date: item.date || item.published_at,
       }));
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+
   });
 }

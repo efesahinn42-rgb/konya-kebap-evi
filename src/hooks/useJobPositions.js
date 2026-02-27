@@ -22,7 +22,7 @@ export function useJobPositions() {
 
       const { data, error } = await supabase
         .from('job_positions')
-        .select('*')
+        .select('id, title, department, location, type, description, requirements')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -32,6 +32,6 @@ export function useJobPositions() {
 
       return data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+
   });
 }

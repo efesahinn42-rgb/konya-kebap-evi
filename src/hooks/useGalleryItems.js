@@ -14,7 +14,7 @@ export function useGalleryItems() {
 
       const { data, error } = await supabase
         .from('gallery_items')
-        .select('*')
+        .select('id, category, image_url, alt_text, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -28,6 +28,6 @@ export function useGalleryItems() {
         alt: item.alt_text || (item.category === 'misafir' ? 'Misafirlerimiz' : 'İmza Lezzeti')
       }));
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+
   });
 }

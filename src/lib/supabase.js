@@ -25,7 +25,7 @@ export const handleAuthError = async (error) => {
         try {
             // Clear the invalid session
             await supabase.auth.signOut();
-            
+
             // Clear localStorage
             if (typeof window !== 'undefined') {
                 const keys = Object.keys(localStorage);
@@ -54,7 +54,7 @@ export const uploadFile = async (bucket, path, file) => {
     const { data, error } = await supabase.storage
         .from(bucket)
         .upload(path, file, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: true
         });
 

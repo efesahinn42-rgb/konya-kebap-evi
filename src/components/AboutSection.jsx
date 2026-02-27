@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
 import { Star, TrendingUp, Users, Award, Clock, Heart, Utensils, MapPin } from 'lucide-react';
 import ScrollDownButton from './ScrollDownButton';
+import { useVideos } from '@/hooks/useVideos';
 
 // Kayar istatistikler
 const statsData = [
@@ -19,9 +19,8 @@ const statsData = [
     { value: '25+', label: 'Ödül', icon: Award },
 ];
 
-// Fallback video URLs
-const fallbackBackgroundVideo = "https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&mute=1&controls=0&loop=1&playlist=ScMzIvxBSi4&playsinline=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1";
-const fallbackModalVideo = "https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&rel=0";
+
+
 
 // Marquee Stats Component
 function MarqueeStats() {
@@ -62,77 +61,7 @@ function MarqueeStats() {
 
 export default function AboutSection() {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
-    const [backgroundVideoUrl, setBackgroundVideoUrl] = useState('');
-    const [modalVideoUrl, setModalVideoUrl] = useState('');
-    const [isYouTubeBackground, setIsYouTubeBackground] = useState(true);
-    const [isYouTubeModal, setIsYouTubeModal] = useState(true);
-
-    // Fetch videos from Supabase
-    useEffect(() => {
-        const fetchVideos = async () => {
-            const { data, error } = await supabase
-                .from('ocakbasi_videos')
-                .select('*')
-                .eq('is_active', true)
-                .order('created_at', { ascending: false });
-
-            if (!error && data && data.length > 0) {
-                // Find background video
-                const bgVideo = data.find(v => v.is_background);
-                if (bgVideo) {
-                    const isYT = bgVideo.video_url.includes('youtube');
-                    setIsYouTubeBackground(isYT);
-                    if (isYT) {
-                        // Convert to embed URL with autoplay and mute
-                        const videoId = extractYouTubeId(bgVideo.video_url);
-                        setBackgroundVideoUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&playsinline=1&rel=0&showinfo=0`);
-                    } else {
-                        setBackgroundVideoUrl(bgVideo.video_url);
-                    }
-                } else {
-                    setBackgroundVideoUrl(fallbackBackgroundVideo);
-                }
-
-                // Find modal video
-                const mdlVideo = data.find(v => v.is_modal);
-                if (mdlVideo) {
-                    const isYT = mdlVideo.video_url.includes('youtube');
-                    setIsYouTubeModal(isYT);
-                    if (isYT) {
-                        const videoId = extractYouTubeId(mdlVideo.video_url);
-                        setModalVideoUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`);
-                    } else {
-                        setModalVideoUrl(mdlVideo.video_url);
-                    }
-                } else if (data.length > 0) {
-                    // Use first video as modal if no modal-specific video
-                    const firstVideo = data[0];
-                    const isYT = firstVideo.video_url.includes('youtube');
-                    setIsYouTubeModal(isYT);
-                    if (isYT) {
-                        const videoId = extractYouTubeId(firstVideo.video_url);
-                        setModalVideoUrl(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`);
-                    } else {
-                        setModalVideoUrl(firstVideo.video_url);
-                    }
-                } else {
-                    setModalVideoUrl(fallbackModalVideo);
-                }
-            } else {
-                // Use fallback
-                setBackgroundVideoUrl(fallbackBackgroundVideo);
-                setModalVideoUrl(fallbackModalVideo);
-            }
-        };
-
-        fetchVideos();
-    }, []);
-
-    // Extract YouTube video ID
-    const extractYouTubeId = (url) => {
-        const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-        return match ? match[1] : '';
-    };
+    const { backgroundVideoUrl, modalVideoUrl, isYouTubeBackground, isYouTubeModal } = useVideos();
 
     return (
         <section id="about" className="relative bg-[#0a0a0a] overflow-hidden w-full">

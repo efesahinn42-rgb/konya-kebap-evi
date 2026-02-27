@@ -14,7 +14,7 @@ export function useHeroSlides() {
 
       const { data, error } = await supabase
         .from('hero_slides')
-        .select('*')
+        .select('id, image_url, alt_text, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -24,6 +24,6 @@ export function useHeroSlides() {
 
       return data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+
   });
 }

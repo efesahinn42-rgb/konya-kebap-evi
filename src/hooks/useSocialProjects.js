@@ -19,7 +19,7 @@ export function useSocialProjects() {
 
       const { data, error } = await supabase
         .from('social_projects')
-        .select('*')
+        .select('id, title, description, image_url, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -33,7 +33,7 @@ export function useSocialProjects() {
         image: p.image_url
       }));
     },
-    staleTime: 5 * 60 * 1000,
+
   });
 
   const statsQuery = useQuery({
@@ -43,7 +43,7 @@ export function useSocialProjects() {
 
       const { data, error } = await supabase
         .from('impact_stats')
-        .select('*')
+        .select('id, number, label, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -53,7 +53,7 @@ export function useSocialProjects() {
 
       return data;
     },
-    staleTime: 5 * 60 * 1000,
+
   });
 
   return {

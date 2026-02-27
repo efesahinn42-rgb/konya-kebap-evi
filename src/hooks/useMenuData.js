@@ -12,7 +12,7 @@ export function useMenuData() {
       // Fetch categories
       const { data: categories, error: catError } = await supabase
         .from('menu_categories')
-        .select('*')
+        .select('id, title, icon, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -23,7 +23,7 @@ export function useMenuData() {
       // Fetch all menu items
       const { data: items, error: itemError } = await supabase
         .from('menu_items')
-        .select('*')
+        .select('id, name, price, description, image_url, category_id, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -48,6 +48,6 @@ export function useMenuData() {
 
       return transformedData.length > 0 ? transformedData : fallbackData;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+
   });
 }
