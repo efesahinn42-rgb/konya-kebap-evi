@@ -293,7 +293,7 @@ export default function Navbar() {
                 style={{ willChange: 'transform, top' }}
             >
                 <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${shouldShowScrolled ? 'max-w-[1400px] overflow-hidden' : 'w-full'}`}>
-                    <div className={`relative ${shouldShowScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-[200px] lg:h-[200px]'}`}>
+                    <div className={`relative ${shouldShowScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-16 lg:h-[200px]'}`}>
 
                         {/* Desktop Menu */}
                         <div className="hidden lg:block w-full">
@@ -426,7 +426,7 @@ export default function Navbar() {
 
                         {/* Menu Content */}
                         <div className="relative h-full flex flex-col items-center justify-center">
-                            <nav className="flex flex-col items-center gap-6">
+                            <nav className="flex flex-col items-center gap-5">
                                 {menuItems.map((item, index) => {
                                     // Mobile menu için aktif durum kontrolü
                                     let isActive = false;
@@ -461,9 +461,9 @@ export default function Navbar() {
                                                             handleHomePageClick(e);
                                                             setMobileMenuOpen(false);
                                                         }}
-                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
+                                                        className={`text-lg font-semibold tracking-[0.15em] transition-colors ${isActive
                                                             ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                            : 'text-white hover:text-[#d4af37]'
+                                                            : 'text-white/90 hover:text-[#d4af37]'
                                                             }`}
                                                     >
                                                         {item.label}
@@ -472,9 +472,9 @@ export default function Navbar() {
                                                     <Link
                                                         href={item.href}
                                                         onClick={() => setMobileMenuOpen(false)}
-                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
+                                                        className={`text-lg font-semibold tracking-[0.15em] transition-colors ${isActive
                                                             ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                            : 'text-white hover:text-[#d4af37]'
+                                                            : 'text-white/90 hover:text-[#d4af37]'
                                                             }`}
                                                     >
                                                         {item.label}
@@ -483,9 +483,9 @@ export default function Navbar() {
                                             ) : (
                                                 <button
                                                     onClick={() => handleLinkClick(item)}
-                                                    className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
+                                                    className={`text-lg font-semibold tracking-[0.15em] transition-colors ${isActive
                                                         ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                        : 'text-white hover:text-[#d4af37]'
+                                                        : 'text-white/90 hover:text-[#d4af37]'
                                                         }`}
                                                 >
                                                     {item.label}
