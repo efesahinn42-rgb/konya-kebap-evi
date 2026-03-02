@@ -292,14 +292,14 @@ export default function Navbar() {
                 transition={{ duration: 0.5 }}
                 style={{ willChange: 'transform, top' }}
             >
-                <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${shouldShowScrolled ? 'max-w-7xl' : 'w-full'}`}>
-                    <div className={`relative ${shouldShowScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-auto'}`}>
+                <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${shouldShowScrolled ? 'max-w-[1400px] overflow-hidden' : 'w-full'}`}>
+                    <div className={`relative ${shouldShowScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-[200px] lg:h-[200px]'}`}>
 
                         {/* Desktop Menu */}
                         <div className="hidden lg:block w-full">
                             {shouldShowScrolled ? (
                                 /* Scrolled: Unified Horizontal Menu */
-                                <nav className="flex flex-row items-center justify-center gap-6">
+                                <nav className="flex flex-row flex-nowrap items-center justify-evenly w-full">
                                     {menuItems.map((item, index) => {
                                         let isActive = false;
                                         if (item.isPage) {
@@ -309,13 +309,13 @@ export default function Navbar() {
                                             isActive = pathname === '/' && activeSection === hashName;
                                         }
 
-                                        const menuItemClass = `relative text-[16px] font-semibold tracking-[0.12em] transition-all duration-300 ${isActive ? 'text-[#d4af37]' : 'text-white/90 hover:text-[#d4af37]'} group py-2 px-4 whitespace-nowrap`;
+                                        const menuItemClass = `relative text-[11px] lg:text-[12px] xl:text-[13px] 2xl:text-[15px] font-semibold tracking-[0.05em] xl:tracking-[0.08em] 2xl:tracking-[0.1em] transition-all duration-300 ${isActive ? 'text-[#d4af37]' : 'text-white/90 hover:text-[#d4af37]'} group py-2 px-1 lg:px-2 xl:px-3 2xl:px-4 whitespace-nowrap`;
                                         const underlineClass = `absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-[#d4af37] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`;
                                         const IconComponent = item.icon;
                                         const content = (
                                             <span className="flex items-center gap-2">
                                                 {item.label}
-                                                <IconComponent className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#d4af37]" />
+                                                <IconComponent className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#d4af37] hidden xl:inline-block" />
                                                 <span className={underlineClass} />
                                             </span>
                                         );
