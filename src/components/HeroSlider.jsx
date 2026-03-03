@@ -93,7 +93,7 @@ export default function HeroSlider() {
                             priority={currentIndex === 0}
                             className="object-contain md:object-cover object-center"
                             sizes="100vw"
-                            quality={90}
+                            quality={75}
                         />
                     </motion.div>
                 </AnimatePresence>

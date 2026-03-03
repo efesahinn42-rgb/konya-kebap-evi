@@ -2,6 +2,7 @@
 const nextConfig = {
   output: 'standalone',
   images: {
+    minimumCacheTTL: 31536000, // 1 yıl — optimize edilen görseller disk cache'de kalır, Supabase'e tekrar sorulmaz
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,9 +18,9 @@ const nextConfig = {
       },
     ],
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    qualities: [75, 90],
+    qualities: [75],
   },
   async redirects() {
     return [
