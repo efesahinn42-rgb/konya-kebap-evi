@@ -18,8 +18,12 @@ export function useGalleryItems() {
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
-      if (error || !data || data.length === 0) {
+      if (error || !data) {
         return fallbackItems;
+      }
+
+      if (data.length === 0) {
+        return [];
       }
 
       return data.map(item => ({
