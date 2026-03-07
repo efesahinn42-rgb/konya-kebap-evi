@@ -91,9 +91,9 @@ export default function HeroSlider() {
                             alt={currentSlide.alt_text || 'Konya Kebap Evi'}
                             fill
                             priority={currentIndex === 0}
-                            className="object-contain md:object-cover object-center"
+                            className="object-cover object-center"
                             sizes="100vw"
-                            quality={75}
+                            quality={90}
                         />
                     </motion.div>
                 </AnimatePresence>

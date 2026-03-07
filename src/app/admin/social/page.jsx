@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
+import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Heart, Save, X, Edit2, Upload, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -96,12 +96,11 @@ export default function SocialManagement() {
             if (editingItem) {
                 const { error } = await supabase.from('social_projects').update(saveData).eq('id', editingItem.id);
                 if (error) throw error;
-                setProjects(prev => prev.map(p => p.id === editingItem.id ? { ...p, ...saveData } : p));
             } else {
-                const { data, error } = await supabase.from('social_projects').insert({ ...saveData, display_order: projects.length, is_active: true }).select().single();
+                const { error } = await supabase.from('social_projects').insert({ ...saveData, display_order: projects.length, is_active: true });
                 if (error) throw error;
-                if (data) setProjects(prev => [...prev, data]);
             }
+            await fetchData();
             setShowModal(false);
             setSelectedFile(null);
             setPreviewUrl('');
@@ -109,7 +108,6 @@ export default function SocialManagement() {
         } catch (err) {
             console.error('Error saving project:', err);
             showError('Kaydetme sırasında bir hata oluştu');
-            fetchData();
         }
         setSaving(false);
     };
@@ -125,18 +123,16 @@ export default function SocialManagement() {
             if (editingStat) {
                 const { error } = await supabase.from('impact_stats').update(statFormData).eq('id', editingStat.id);
                 if (error) throw error;
-                setStats(prev => prev.map(s => s.id === editingStat.id ? { ...s, ...statFormData } : s));
             } else {
-                const { data, error } = await supabase.from('impact_stats').insert({ ...statFormData, display_order: stats.length, is_active: true }).select().single();
+                const { error } = await supabase.from('impact_stats').insert({ ...statFormData, display_order: stats.length, is_active: true });
                 if (error) throw error;
-                if (data) setStats(prev => [...prev, data]);
             }
+            await fetchData();
             setShowStatsModal(false);
             success(editingStat ? 'İstatistik güncellendi' : 'İstatistik eklendi');
         } catch (err) {
             console.error('Error saving stat:', err);
             showError('Kaydetme sırasında bir hata oluştu');
-            fetchData();
         }
         setSaving(false);
     };
@@ -148,17 +144,13 @@ export default function SocialManagement() {
     const confirmDeleteProject = async () => {
         if (!deleteProjectConfirm) return;
         try {
-            // Storage'dan görseli sil
-            await deleteStorageFileFromUrl(deleteProjectConfirm.image_url);
-
             const { error } = await supabase.from('social_projects').delete().eq('id', deleteProjectConfirm.id);
             if (error) throw error;
-            setProjects(prev => prev.filter(p => p.id !== deleteProjectConfirm.id));
+            await fetchData();
             success('Proje başarıyla silindi');
         } catch (err) {
             console.error('Error deleting project:', err);
             showError('Proje silinirken bir hata oluştu');
-            fetchData();
         } finally {
             setDeleteProjectConfirm(null);
         }
@@ -173,33 +165,23 @@ export default function SocialManagement() {
         try {
             const { error } = await supabase.from('impact_stats').delete().eq('id', deleteStatConfirm.id);
             if (error) throw error;
-            setStats(prev => prev.filter(s => s.id !== deleteStatConfirm.id));
+            await fetchData();
             success('İstatistik başarıyla silindi');
         } catch (err) {
             console.error('Error deleting stat:', err);
             showError('İstatistik silinirken bir hata oluştu');
-            fetchData();
         } finally {
             setDeleteStatConfirm(null);
         }
     };
 
     const handleToggleActive = async (item, table) => {
-        if (table === 'social_projects') {
-            setProjects(prev => prev.map(p => p.id === item.id ? { ...p, is_active: !p.is_active } : p));
-        } else {
-            setStats(prev => prev.map(s => s.id === item.id ? { ...s, is_active: !s.is_active } : s));
-        }
         try {
             const { error } = await supabase.from(table).update({ is_active: !item.is_active }).eq('id', item.id);
             if (error) throw error;
+            await fetchData();
         } catch (err) {
             console.error('Error updating item:', err);
-            if (table === 'social_projects') {
-                setProjects(prev => prev.map(p => p.id === item.id ? { ...p, is_active: item.is_active } : p));
-            } else {
-                setStats(prev => prev.map(s => s.id === item.id ? { ...s, is_active: item.is_active } : s));
-            }
         }
     };
 

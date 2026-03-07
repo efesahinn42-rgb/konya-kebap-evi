@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
+import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Newspaper, Save, X, Edit2, Upload, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -112,27 +112,23 @@ export default function PressManagement() {
                     .update(saveData)
                     .eq('id', editingItem.id);
                 if (error) throw error;
-                setItems(prev => prev.map(i => i.id === editingItem.id ? { ...i, ...saveData } : i));
             } else {
-                const { data, error } = await supabase
+                const { error } = await supabase
                     .from('press_items')
                     .insert({
                         ...saveData,
                         display_order: items.length,
                         is_active: true
-                    })
-                    .select()
-                    .single();
+                    });
                 if (error) throw error;
-                if (data) setItems(prev => [...prev, data]);
             }
+            await fetchItems();
             setShowModal(false);
             resetForm();
             success(editingItem ? 'İçerik güncellendi' : 'İçerik eklendi');
         } catch (err) {
             console.error('Error saving item:', err);
             showError('Kaydetme sırasında bir hata oluştu');
-            fetchItems();
         }
         setSaving(false);
     };
@@ -145,37 +141,32 @@ export default function PressManagement() {
         if (!deleteConfirm) return;
 
         try {
-            // Storage'dan görseli sil
-            await deleteStorageFileFromUrl(deleteConfirm.image_url);
-
             const { error } = await supabase
                 .from('press_items')
                 .delete()
                 .eq('id', deleteConfirm.id);
 
             if (error) throw error;
-            setItems(prev => prev.filter(i => i.id !== deleteConfirm.id));
+            await fetchItems();
             success('İçerik başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
             showError('Silme işlemi başarısız');
-            fetchItems();
         } finally {
             setDeleteConfirm(null);
         }
     };
 
     const handleToggleActive = async (item) => {
-        setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
         try {
             const { error } = await supabase
                 .from('press_items')
                 .update({ is_active: !item.is_active })
                 .eq('id', item.id);
             if (error) throw error;
+            await fetchItems();
         } catch (err) {
             console.error('Error updating item:', err);
-            setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: item.is_active } : i));
         }
     };
 
@@ -285,8 +276,8 @@ export default function PressManagement() {
                                         <button
                                             onClick={() => handleToggleActive(item)}
                                             className={`p-2 rounded-lg transition-colors ${item.is_active
-                                                ? 'bg-green-500/20 text-green-400'
-                                                : 'bg-zinc-800 text-zinc-400'
+                                                    ? 'bg-green-500/20 text-green-400'
+                                                    : 'bg-zinc-800 text-zinc-400'
                                                 }`}
                                         >
                                             {item.is_active ? '✓' : '○'}
@@ -380,8 +371,9 @@ export default function PressManagement() {
                                         }
                                     }}
                                     placeholder="Ocak 2024"
-                                    className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${dateError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
-                                        }`}
+                                    className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${
+                                        dateError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
+                                    }`}
                                 />
                                 {dateError && (
                                     <p className="text-red-400 text-xs mt-1">{dateError}</p>

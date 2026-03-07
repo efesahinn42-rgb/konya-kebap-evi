@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { Users, Briefcase, GraduationCap, Heart, Clock, Award, Send, ChevronUp } from 'lucide-react';
 import { useJobPositions } from '@/hooks/useJobPositions';
 import { supabase } from '@/lib/supabase';
@@ -145,12 +144,10 @@ export default function HRSection() {
                     viewport={{ once: true }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                    <Image
+                    <img
                         src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?q=80&w=1400"
                         alt="Ekibimiz"
-                        fill
-                        sizes="100vw"
-                        className="object-cover"
+                        className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent flex items-center">
                         <div className="p-8 sm:p-12 lg:p-16 max-w-xl">

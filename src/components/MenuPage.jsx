@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { ChevronDown } from 'lucide-react';
 import { useMenuData } from '@/hooks/useMenuData';
 import Navbar from '@/components/Navbar';
@@ -75,12 +74,10 @@ const MenuCard = ({ item }) => (
         whileHover={{ y: -5 }}
     >
         <div className="relative aspect-[4/3] overflow-hidden">
-            <Image
+            <img
                 src={item.image}
                 alt={item.name}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
             <div className="absolute top-3 right-3 px-3 py-1.5 bg-[#d4af37] text-black font-black text-sm rounded-full shadow-lg">
                 {item.price} ₺
@@ -98,27 +95,25 @@ const MenuCard = ({ item }) => (
 );
 
 const CategorySection = ({ category, isOpen, onToggle }) => (
-    <div className="mb-3 sm:mb-4">
+    <div className="mb-4">
         <motion.button
             onClick={onToggle}
-            className="w-full flex items-center justify-between p-3.5 sm:p-5 bg-zinc-900/80 hover:bg-zinc-800/80 rounded-xl sm:rounded-2xl border border-white/10 hover:border-[#d4af37]/30 transition-all group"
+            className="w-full flex items-center justify-between p-4 sm:p-5 bg-zinc-900/80 hover:bg-zinc-800/80 rounded-2xl border border-white/10 hover:border-[#d4af37]/30 transition-all group"
             whileTap={{ scale: 0.99 }}
         >
-            <div className="flex items-center gap-2.5 sm:gap-4 min-w-0 flex-1">
-                <span className="text-xl sm:text-3xl flex-shrink-0">{category.icon}</span>
-                <div className="flex items-baseline gap-2 min-w-0 flex-wrap">
-                    <span className="text-sm sm:text-xl lg:text-2xl font-black text-white tracking-wide group-hover:text-[#d4af37] transition-colors">
-                        {category.title}
-                    </span>
-                    <span className="text-[10px] sm:text-xs text-zinc-500 font-bold whitespace-nowrap">({category.items.length} ürün)</span>
-                </div>
+            <div className="flex items-center gap-3 sm:gap-4">
+                <span className="text-2xl sm:text-3xl">{category.icon}</span>
+                <span className="text-lg sm:text-xl lg:text-2xl font-black text-white tracking-wide group-hover:text-[#d4af37] transition-colors">
+                    {category.title}
+                </span>
+                <span className="text-xs text-zinc-500 font-bold">({category.items.length} ürün)</span>
             </div>
             <motion.div
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: 0.3 }}
-                className="text-[#d4af37] flex-shrink-0 ml-2"
+                className="text-[#d4af37]"
             >
-                <ChevronDown className="w-5 h-5 sm:w-7 sm:h-7" />
+                <ChevronDown className="w-6 h-6 sm:w-7 sm:h-7" />
             </motion.div>
         </motion.button>
         <AnimatePresence>
@@ -130,7 +125,7 @@ const CategorySection = ({ category, isOpen, onToggle }) => (
                     transition={{ duration: 0.4, ease: 'easeInOut' }}
                     className="overflow-hidden"
                 >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 pt-3 sm:pt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 pt-4">
                         {category.items.map((item, index) => (
                             <MenuCard key={index} item={item} />
                         ))}

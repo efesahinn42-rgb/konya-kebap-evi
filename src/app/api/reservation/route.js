@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 import { reservationSchema, formatPhoneForSMS } from '@/lib/validation';
 import { sendBusinessSMS } from '@/lib/sms';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request) {
     try {
@@ -101,9 +101,9 @@ export async function POST(request) {
 
         // 6. Save to database
         let reservationId = null;
-        if (supabaseAdmin) {
+        if (supabase) {
             try {
-                const { data: insertedData, error } = await supabaseAdmin
+                const { data: insertedData, error } = await supabase
                     .from('reservations')
                     .insert({
                         name: data.name,

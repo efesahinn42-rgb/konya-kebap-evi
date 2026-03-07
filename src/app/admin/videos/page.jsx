@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
+import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Video, Save, X, Link as LinkIcon, Play, Upload } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -76,7 +76,7 @@ export default function VideosManagement() {
                 return;
             }
 
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('ocakbasi_videos')
                 .insert({
                     title: newVideo.title,
@@ -85,12 +85,10 @@ export default function VideosManagement() {
                     is_background: newVideo.is_background,
                     is_modal: newVideo.is_modal,
                     is_active: true
-                })
-                .select()
-                .single();
+                });
 
             if (error) throw error;
-            if (data) setVideos(prev => [data, ...prev]);
+            await fetchVideos();
             setShowModal(false);
             resetForm();
             success('Video başarıyla eklendi');
@@ -122,28 +120,23 @@ export default function VideosManagement() {
         if (!deleteConfirm) return;
 
         try {
-            // Storage'dan video dosyasını sil (YouTube URL'leri otomatik atlanır)
-            await deleteStorageFileFromUrl(deleteConfirm.video_url);
-
             const { error } = await supabase
                 .from('ocakbasi_videos')
                 .delete()
                 .eq('id', deleteConfirm.id);
 
             if (error) throw error;
-            setVideos(prev => prev.filter(v => v.id !== deleteConfirm.id));
+            await fetchVideos();
             success('Video başarıyla silindi');
         } catch (err) {
             console.error('Error deleting video:', err);
             showError('Video silinirken bir hata oluştu');
-            fetchVideos();
         } finally {
             setDeleteConfirm(null);
         }
     };
 
     const handleToggleActive = async (video) => {
-        setVideos(prev => prev.map(v => v.id === video.id ? { ...v, is_active: !v.is_active } : v));
         try {
             const { error } = await supabase
                 .from('ocakbasi_videos')
@@ -151,9 +144,9 @@ export default function VideosManagement() {
                 .eq('id', video.id);
 
             if (error) throw error;
+            await fetchVideos();
         } catch (err) {
             console.error('Error updating video:', err);
-            setVideos(prev => prev.map(v => v.id === video.id ? { ...v, is_active: video.is_active } : v));
         }
     };
 
@@ -385,8 +378,9 @@ export default function VideosManagement() {
                                             }
                                         }}
                                         placeholder="https://www.youtube.com/embed/xxxx veya https://youtu.be/xxxx"
-                                        className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${urlError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
-                                            }`}
+                                        className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${
+                                            urlError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
+                                        }`}
                                     />
                                     {urlError && (
                                         <p className="text-red-400 text-xs mt-1">{urlError}</p>

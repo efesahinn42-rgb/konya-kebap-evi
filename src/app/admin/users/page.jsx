@@ -44,25 +44,50 @@ export default function UsersPage() {
 
     const handleAddUser = async (e) => {
         e.preventDefault();
+        if (!supabase) return;
         setSaving(true);
         setError(null);
 
         try {
-            const response = await fetch('/api/admin/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'invite',
+            // Önce Supabase Auth ile kullanıcı davet et
+            const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(newUser.email);
+
+            if (authError) {
+                // Magic link ile devam et (admin API olmadan)
+                const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
                     email: newUser.email,
-                    name: newUser.name,
-                    role: newUser.role
-                })
-            });
+                    options: {
+                        shouldCreateUser: true
+                    }
+                });
 
-            const result = await response.json();
+                if (signInError) throw signInError;
 
-            if (!response.ok) {
-                throw new Error(result.error || 'Kullanıcı eklenirken bir hata oluştu');
+                // Kullanıcı oluşturulduktan sonra admin_users'a ekle
+                // NOT: Bu, kullanıcı ilk giriş yaptığında yapılmalı
+                // Şimdilik sadece email ile kayıt oluştur
+                const { error: insertError } = await supabase
+                    .from('admin_users')
+                    .insert({
+                        email: newUser.email,
+                        name: newUser.name,
+                        role: newUser.role,
+                        user_id: null // Kullanıcı giriş yaptığında güncellenecek
+                    });
+
+                if (insertError) throw insertError;
+            } else if (authData?.user) {
+                // Admin API ile davet başarılı
+                const { error: insertError } = await supabase
+                    .from('admin_users')
+                    .insert({
+                        user_id: authData.user.id,
+                        email: newUser.email,
+                        name: newUser.name,
+                        role: newUser.role
+                    });
+
+                if (insertError) throw insertError;
             }
 
             setShowAddModal(false);
@@ -102,28 +127,20 @@ export default function UsersPage() {
     };
 
     const confirmDelete = async () => {
-        if (!deleteConfirm) return;
+        if (!deleteConfirm || !supabase) return;
 
         try {
-            // Find the user to get user_id if linked
-            const userToDelete = users.find(u => u.id === deleteConfirm);
-            if (!userToDelete) return;
+            const { error } = await supabase
+                .from('admin_users')
+                .delete()
+                .eq('id', deleteConfirm);
 
-            const response = await fetch(`/api/admin/users?dbId=${deleteConfirm}` +
-                (userToDelete.user_id ? `&userId=${userToDelete.user_id}` : ''), {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) {
-                const result = await response.json();
-                throw new Error(result.error || 'Silme işlemi başarısız');
-            }
-
+            if (error) throw error;
             fetchUsers();
             success('Kullanıcı başarıyla silindi');
         } catch (err) {
             console.error('Error deleting user:', err);
-            showError(err.message || 'Kullanıcı silinirken hata oluştu');
+            showError('Kullanıcı silinirken hata oluştu');
         } finally {
             setDeleteConfirm(null);
         }

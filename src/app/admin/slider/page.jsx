@@ -63,20 +63,18 @@ export default function SliderManagement() {
                 return;
             }
 
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('hero_slides')
                 .insert({
                     image_url: imageUrl,
                     alt_text: newSlide.alt_text || 'Konya Kebap Evi',
                     display_order: slides.length,
                     is_active: true
-                })
-                .select()
-                .single();
+                });
 
             if (error) throw error;
 
-            if (data) setSlides(prev => [...prev, data]);
+            await fetchSlides();
             setShowModal(false);
             setNewSlide({ image_url: '', alt_text: '' });
             setSelectedFile(null);
@@ -119,12 +117,11 @@ export default function SliderManagement() {
                 .eq('id', deleteConfirm.id);
 
             if (error) throw error;
-            setSlides(prev => prev.filter(s => s.id !== deleteConfirm.id));
+            await fetchSlides();
             success('Görsel başarıyla silindi');
         } catch (err) {
             console.error('Error deleting slide:', err);
             showError('Görsel silinirken bir hata oluştu');
-            fetchSlides();
         } finally {
             setDeleteConfirm(null);
         }
@@ -132,7 +129,6 @@ export default function SliderManagement() {
 
     // Toggle active status
     const handleToggleActive = async (slide) => {
-        setSlides(prev => prev.map(s => s.id === slide.id ? { ...s, is_active: !s.is_active } : s));
         try {
             const { error } = await supabase
                 .from('hero_slides')
@@ -140,9 +136,9 @@ export default function SliderManagement() {
                 .eq('id', slide.id);
 
             if (error) throw error;
+            await fetchSlides();
         } catch (err) {
             console.error('Error updating slide:', err);
-            setSlides(prev => prev.map(s => s.id === slide.id ? { ...s, is_active: slide.is_active } : s));
         }
     };
 

@@ -1,7 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
-const fallbackData = [];
+const fallbackData = [
+  {
+    id: 1,
+    title: 'Kebap Çeşitleri',
+    icon: '🍖',
+    items: [
+      { name: 'Adana Kebap', price: '150.00', description: 'Acılı kıyma kebap', image: null },
+      { name: 'Urfa Kebap', price: '150.00', description: 'Acısız kıyma kebap', image: null },
+    ]
+  }
+];
 
 export function useMenuData() {
   return useQuery({
@@ -12,7 +22,7 @@ export function useMenuData() {
       // Fetch categories
       const { data: categories, error: catError } = await supabase
         .from('menu_categories')
-        .select('id, title, icon, display_order')
+        .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -23,7 +33,7 @@ export function useMenuData() {
       // Fetch all menu items
       const { data: items, error: itemError } = await supabase
         .from('menu_items')
-        .select('id, name, price, description, image_url, category_id, display_order')
+        .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
@@ -48,6 +58,6 @@ export function useMenuData() {
 
       return transformedData.length > 0 ? transformedData : fallbackData;
     },
-
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

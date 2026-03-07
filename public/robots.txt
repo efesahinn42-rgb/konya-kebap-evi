@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-Allow: /menu
-Disallow: /admin/
-Disallow: /api/
-
-Sitemap: https://konyakebapevi.com/sitemap.xml

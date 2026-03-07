@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
+import { supabase, uploadFile } from '@/lib/supabase';
 import { Plus, Trash2, Images, Save, X, Upload, Link as LinkIcon, Filter } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -60,7 +60,7 @@ export default function GalleryManagement() {
                 return;
             }
 
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('gallery_items')
                 .insert({
                     category: newItem.category,
@@ -68,12 +68,10 @@ export default function GalleryManagement() {
                     alt_text: newItem.alt_text || (newItem.category === 'misafir' ? 'Misafirlerimiz' : 'İmza Lezzet'),
                     display_order: items.length,
                     is_active: true
-                })
-                .select()
-                .single();
+                });
 
             if (error) throw error;
-            if (data) setItems(prev => [...prev, data]);
+            await fetchItems();
             setShowModal(false);
             resetForm();
             success('Görsel başarıyla eklendi');
@@ -98,28 +96,23 @@ export default function GalleryManagement() {
         if (!deleteConfirm) return;
 
         try {
-            // Storage'dan dosyayı sil
-            await deleteStorageFileFromUrl(deleteConfirm.image_url);
-
             const { error } = await supabase
                 .from('gallery_items')
                 .delete()
                 .eq('id', deleteConfirm.id);
 
             if (error) throw error;
-            setItems(prev => prev.filter(i => i.id !== deleteConfirm.id));
+            await fetchItems();
             success('Görsel başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
             showError('Görsel silinirken bir hata oluştu');
-            fetchItems();
         } finally {
             setDeleteConfirm(null);
         }
     };
 
     const handleToggleActive = async (item) => {
-        setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
         try {
             const { error } = await supabase
                 .from('gallery_items')
@@ -127,9 +120,9 @@ export default function GalleryManagement() {
                 .eq('id', item.id);
 
             if (error) throw error;
+            await fetchItems();
         } catch (err) {
             console.error('Error updating item:', err);
-            setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: item.is_active } : i));
         }
     };
 
@@ -142,17 +135,6 @@ export default function GalleryManagement() {
 
     return (
         <div className="space-y-6">
-            <ToastContainer />
-            <ConfirmDialog
-                isOpen={!!deleteConfirm}
-                onClose={() => setDeleteConfirm(null)}
-                onConfirm={confirmDelete}
-                title="Görseli Sil"
-                message={`Bu görseli silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
-                confirmText="Evet, Sil"
-                cancelText="İptal"
-                type="danger"
-            />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -173,8 +155,8 @@ export default function GalleryManagement() {
                 <button
                     onClick={() => setActiveCategory('all')}
                     className={`px-4 py-2 rounded-xl font-medium transition-all ${activeCategory === 'all'
-                        ? 'bg-[#d4af37] text-black'
-                        : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                            ? 'bg-[#d4af37] text-black'
+                            : 'bg-zinc-800 text-zinc-400 hover:text-white'
                         }`}
                 >
                     Tümü ({items.length})
@@ -182,8 +164,8 @@ export default function GalleryManagement() {
                 <button
                     onClick={() => setActiveCategory('misafir')}
                     className={`px-4 py-2 rounded-xl font-medium transition-all ${activeCategory === 'misafir'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-zinc-800 text-zinc-400 hover:text-white'
                         }`}
                 >
                     Misafirlerimiz ({misafirCount})
@@ -191,8 +173,8 @@ export default function GalleryManagement() {
                 <button
                     onClick={() => setActiveCategory('imza')}
                     className={`px-4 py-2 rounded-xl font-medium transition-all ${activeCategory === 'imza'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-zinc-800 text-zinc-400 hover:text-white'
                         }`}
                 >
                     İmza Lezzetleri ({imzaCount})
@@ -239,8 +221,8 @@ export default function GalleryManagement() {
                                 {/* Category Badge */}
                                 <div className="absolute top-2 left-2">
                                     <span className={`px-2 py-1 text-xs font-bold rounded ${item.category === 'misafir'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-green-500 text-white'
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-green-500 text-white'
                                         }`}>
                                         {item.category === 'misafir' ? 'Misafir' : 'İmza'}
                                     </span>
@@ -251,8 +233,8 @@ export default function GalleryManagement() {
                                     <button
                                         onClick={() => handleToggleActive(item)}
                                         className={`p-2 rounded-lg transition-colors ${item.is_active
-                                            ? 'bg-green-500/20 text-green-400'
-                                            : 'bg-zinc-800 text-zinc-400'
+                                                ? 'bg-green-500/20 text-green-400'
+                                                : 'bg-zinc-800 text-zinc-400'
                                             }`}
                                     >
                                         {item.is_active ? '✓' : '○'}
@@ -302,8 +284,8 @@ export default function GalleryManagement() {
                                     <button
                                         onClick={() => setNewItem({ ...newItem, category: 'misafir' })}
                                         className={`flex-1 py-3 rounded-xl font-medium transition-all ${newItem.category === 'misafir'
-                                            ? 'bg-blue-500 text-white'
-                                            : 'bg-zinc-800 text-zinc-400'
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-zinc-800 text-zinc-400'
                                             }`}
                                     >
                                         Misafirlerimiz
@@ -311,8 +293,8 @@ export default function GalleryManagement() {
                                     <button
                                         onClick={() => setNewItem({ ...newItem, category: 'imza' })}
                                         className={`flex-1 py-3 rounded-xl font-medium transition-all ${newItem.category === 'imza'
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-zinc-800 text-zinc-400'
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-zinc-800 text-zinc-400'
                                             }`}
                                     >
                                         İmza Lezzetleri

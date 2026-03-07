@@ -174,7 +174,16 @@ export default function AdminLayout({ children }) {
             setUserRole(null);
             setUserName(null);
 
-            // Clear localStorage immediately
+            // Sign out from Supabase
+            const { error } = await supabase.auth.signOut();
+
+            if (error) {
+                console.error('Logout error:', error);
+                // Handle refresh token errors during logout
+                await handleAuthError(error);
+            }
+
+            // Clear localStorage
             if (typeof window !== 'undefined') {
                 const keys = Object.keys(localStorage);
                 keys.forEach(key => {
@@ -184,17 +193,18 @@ export default function AdminLayout({ children }) {
                 });
             }
 
-            // Sign out from Supabase in the background (don't wait)
-            supabase.auth.signOut().catch(err => {
-                console.error('Background signOut error:', err);
-            });
-
-            // Redirect immediately to login page
+            // Use window.location for more reliable redirect
+            // This ensures the page fully reloads and clears all state
             window.location.href = '/admin/login';
         } catch (err) {
             console.error('Logout failed:', err);
+            // Handle auth errors
+            await handleAuthError(err);
             // Force redirect even on error
             window.location.href = '/admin/login';
+        } finally {
+            // This won't execute if window.location redirects, but good practice
+            setLoggingOut(false);
         }
     };
 

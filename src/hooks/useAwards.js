@@ -19,7 +19,7 @@ export function useAwards() {
 
       const { data, error } = await supabase
         .from('awards')
-        .select('id, title, year, image_url, description, display_order')
+        .select('*')
         .eq('is_active', true)
         .order('year', { ascending: false })
         .order('display_order', { ascending: true });
@@ -30,6 +30,6 @@ export function useAwards() {
 
       return data;
     },
-
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
