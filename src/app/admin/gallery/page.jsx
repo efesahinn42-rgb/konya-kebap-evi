@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile } from '@/lib/supabase';
+import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Images, Save, X, Upload, Link as LinkIcon, Filter } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -98,6 +98,9 @@ export default function GalleryManagement() {
         if (!deleteConfirm) return;
 
         try {
+            // Storage'dan dosyayı sil
+            await deleteStorageFileFromUrl(deleteConfirm.image_url);
+
             const { error } = await supabase
                 .from('gallery_items')
                 .delete()

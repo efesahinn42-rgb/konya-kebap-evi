@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile } from '@/lib/supabase';
+import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Video, Save, X, Link as LinkIcon, Play, Upload } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -77,17 +77,17 @@ export default function VideosManagement() {
             }
 
             const { data, error } = await supabase
-            .from('ocakbasi_videos')
-            .insert({
-                title: newVideo.title,
-                video_url: videoUrl,
-                thumbnail_url: newVideo.thumbnail_url || null,
-                is_background: newVideo.is_background,
-                is_modal: newVideo.is_modal,
-                is_active: true
-            })
-            .select()
-            .single();
+                .from('ocakbasi_videos')
+                .insert({
+                    title: newVideo.title,
+                    video_url: videoUrl,
+                    thumbnail_url: newVideo.thumbnail_url || null,
+                    is_background: newVideo.is_background,
+                    is_modal: newVideo.is_modal,
+                    is_active: true
+                })
+                .select()
+                .single();
 
             if (error) throw error;
             if (data) setVideos(prev => [data, ...prev]);
@@ -122,6 +122,9 @@ export default function VideosManagement() {
         if (!deleteConfirm) return;
 
         try {
+            // Storage'dan video dosyasını sil (YouTube URL'leri otomatik atlanır)
+            await deleteStorageFileFromUrl(deleteConfirm.video_url);
+
             const { error } = await supabase
                 .from('ocakbasi_videos')
                 .delete()
@@ -382,9 +385,8 @@ export default function VideosManagement() {
                                             }
                                         }}
                                         placeholder="https://www.youtube.com/embed/xxxx veya https://youtu.be/xxxx"
-                                        className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${
-                                            urlError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
-                                        }`}
+                                        className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${urlError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
+                                            }`}
                                     />
                                     {urlError && (
                                         <p className="text-red-400 text-xs mt-1">{urlError}</p>

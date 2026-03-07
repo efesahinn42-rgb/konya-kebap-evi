@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile } from '@/lib/supabase';
+import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Heart, Save, X, Edit2, Upload, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -148,6 +148,9 @@ export default function SocialManagement() {
     const confirmDeleteProject = async () => {
         if (!deleteProjectConfirm) return;
         try {
+            // Storage'dan görseli sil
+            await deleteStorageFileFromUrl(deleteProjectConfirm.image_url);
+
             const { error } = await supabase.from('social_projects').delete().eq('id', deleteProjectConfirm.id);
             if (error) throw error;
             setProjects(prev => prev.filter(p => p.id !== deleteProjectConfirm.id));

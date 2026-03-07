@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile } from '@/lib/supabase';
+import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Save, X, Edit2, UtensilsCrossed, ChevronRight, ArrowLeft, Upload, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -257,6 +257,9 @@ export default function MenuManagement() {
         if (!deleteItemConfirm) return;
 
         try {
+            // Storage'dan görseli sil
+            await deleteStorageFileFromUrl(deleteItemConfirm.image_url);
+
             const { error } = await supabase
                 .from('menu_items')
                 .delete()

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile } from '@/lib/supabase';
+import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Newspaper, Save, X, Edit2, Upload, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -145,6 +145,9 @@ export default function PressManagement() {
         if (!deleteConfirm) return;
 
         try {
+            // Storage'dan görseli sil
+            await deleteStorageFileFromUrl(deleteConfirm.image_url);
+
             const { error } = await supabase
                 .from('press_items')
                 .delete()
@@ -282,8 +285,8 @@ export default function PressManagement() {
                                         <button
                                             onClick={() => handleToggleActive(item)}
                                             className={`p-2 rounded-lg transition-colors ${item.is_active
-                                                    ? 'bg-green-500/20 text-green-400'
-                                                    : 'bg-zinc-800 text-zinc-400'
+                                                ? 'bg-green-500/20 text-green-400'
+                                                : 'bg-zinc-800 text-zinc-400'
                                                 }`}
                                         >
                                             {item.is_active ? '✓' : '○'}
@@ -377,9 +380,8 @@ export default function PressManagement() {
                                         }
                                     }}
                                     placeholder="Ocak 2024"
-                                    className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${
-                                        dateError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
-                                    }`}
+                                    className={`w-full bg-zinc-800 border rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none ${dateError ? 'border-red-500' : 'border-zinc-700 focus:border-[#d4af37]'
+                                        }`}
                                 />
                                 {dateError && (
                                     <p className="text-red-400 text-xs mt-1">{dateError}</p>
