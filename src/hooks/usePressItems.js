@@ -1,31 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
-const fallbackPressItems = [
-  {
-    id: 1,
-    outlet: 'Yemek.com',
-    external_url: 'https://yemek.com',
-    quote: 'Konya\'nın en iyi kebap restoranı',
-    color: '#d4af37',
-    date: new Date().toISOString(),
-  }
-];
-
 export function usePressItems() {
   return useQuery({
     queryKey: ['pressItems'],
     queryFn: async () => {
-      if (!supabase) return fallbackPressItems;
+      if (!supabase) return [];
 
       const { data, error } = await supabase
         .from('press_items')
-        .select('*')
+        .select('id, outlet, external_url, quote, color, published_at, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
 
       if (error || !data || data.length === 0) {
-        return fallbackPressItems;
+        return [];
       }
 
       return data.map(item => ({
@@ -37,6 +26,6 @@ export function usePressItems() {
         date: item.date || item.published_at,
       }));
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+
   });
 }
