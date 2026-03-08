@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile, deleteFile } from '@/lib/supabase';
-import { Plus, Trash2, GripVertical, Image as ImageIcon, Save, X, Upload, Link as LinkIcon } from 'lucide-react';
+import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
+import { Plus, Trash2, Image as ImageIcon, Save, X, Upload, Link as LinkIcon, Edit2 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
 
@@ -12,12 +12,19 @@ export default function SliderManagement() {
     const [saving, setSaving] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState(null);
-    const [uploadType, setUploadType] = useState('url'); // 'url' or 'file'
+    const [uploadType, setUploadType] = useState('url');
     const [newSlide, setNewSlide] = useState({ image_url: '', alt_text: '' });
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
 
-    // Fetch slides
+    // Edit state
+    const [editingSlide, setEditingSlide] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editUploadType, setEditUploadType] = useState('url');
+    const [editForm, setEditForm] = useState({ image_url: '', alt_text: '' });
+    const [editSelectedFile, setEditSelectedFile] = useState(null);
+    const [editPreviewUrl, setEditPreviewUrl] = useState('');
+
     useEffect(() => {
         fetchSlides();
     }, []);
@@ -36,12 +43,19 @@ export default function SliderManagement() {
         setLoading(false);
     };
 
-    // Handle file selection
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
         if (file) {
             setSelectedFile(file);
             setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
+
+    const handleEditFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setEditSelectedFile(file);
+            setEditPreviewUrl(URL.createObjectURL(file));
         }
     };
 
@@ -51,10 +65,80 @@ export default function SliderManagement() {
         try {
             let imageUrl = newSlide.image_url;
 
-            // Upload file if selected
             if (uploadType === 'file' && selectedFile) {
-                const fileName = `slide-${Date.now()}-${selectedFile.name}`;
-                imageUrl = await uploadFile('hero-slides', fileName, selectedFile);
+                const fileName = `slide-${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+                const uploadPromise = uploadFile('hero-slides', fileName, selectedFile);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Dosya yükleme zaman aşımına uğradı (max 30s).')), 30000)
+                );
+                imageUrl = await Promise.race([uploadPromise, timeoutPromise]);
+            }
+
+            if (!imageUrl) {
+                showError('Lütfen bir görsel URL\'si girin veya dosya yükleyin');
+                setSaving(false);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('hero_slides')
+                .insert({
+                    image_url: imageUrl,
+                    alt_text: newSlide.alt_text || 'Konya Kebap Evi',
+                    display_order: slides.length,
+                    is_active: true
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            if (data) setSlides(prev => [...prev, data]);
+            setShowModal(false);
+            setNewSlide({ image_url: '', alt_text: '' });
+            setSelectedFile(null);
+            setPreviewUrl('');
+            success('Görsel başarıyla eklendi');
+        } catch (err) {
+            console.error('Error adding slide:', err);
+            const errorMsg = err?.message || 'Bilinmeyen hata';
+            if (errorMsg.includes('Bucket not found')) {
+                showError('Supabase Storage bucket "hero-slides" bulunamadı.');
+            } else if (errorMsg.includes('exceeded') || errorMsg.includes('quota')) {
+                showError('Supabase depolama kotası aşıldı. Lütfen eski dosyaları silin.');
+            } else {
+                showError(`Görsel eklenirken hata oluştu: ${errorMsg}`);
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Edit slide
+    const openEditModal = (slide) => {
+        setEditingSlide(slide);
+        setEditForm({ image_url: slide.image_url, alt_text: slide.alt_text || '' });
+        setEditUploadType('url');
+        setEditSelectedFile(null);
+        setEditPreviewUrl(slide.image_url);
+        setShowEditModal(true);
+    };
+
+    const handleEditSlide = async () => {
+        setSaving(true);
+        try {
+            let imageUrl = editForm.image_url;
+
+            if (editUploadType === 'file' && editSelectedFile) {
+                const fileName = `slide-${Date.now()}-${editSelectedFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+                const uploadPromise = uploadFile('hero-slides', fileName, editSelectedFile);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Dosya yükleme zaman aşımına uğradı (max 30s).')), 30000)
+                );
+                imageUrl = await Promise.race([uploadPromise, timeoutPromise]);
+
+                // Eski dosyayı sil
+                await deleteStorageFileFromUrl(editingSlide.image_url);
             }
 
             if (!imageUrl) {
@@ -65,35 +149,21 @@ export default function SliderManagement() {
 
             const { error } = await supabase
                 .from('hero_slides')
-                .insert({
-                    image_url: imageUrl,
-                    alt_text: newSlide.alt_text || 'Konya Kebap Evi',
-                    display_order: slides.length,
-                    is_active: true
-                });
+                .update({ image_url: imageUrl, alt_text: editForm.alt_text || 'Konya Kebap Evi' })
+                .eq('id', editingSlide.id);
 
             if (error) throw error;
 
-            await fetchSlides();
-            setShowModal(false);
-            setNewSlide({ image_url: '', alt_text: '' });
-            setSelectedFile(null);
-            setPreviewUrl('');
-            success('Görsel başarıyla eklendi');
+            setSlides(prev => prev.map(s => s.id === editingSlide.id ? { ...s, image_url: imageUrl, alt_text: editForm.alt_text } : s));
+            setShowEditModal(false);
+            setEditingSlide(null);
+            success('Görsel başarıyla güncellendi');
         } catch (err) {
-            console.error('Error adding slide:', err);
-            const errorMsg = err?.message || 'Bilinmeyen hata';
-            if (errorMsg.includes('Bucket not found')) {
-                showError('Supabase Storage bucket "hero-slides" bulunamadı. Lütfen Supabase Dashboard\'dan bucket oluşturun.');
-            } else if (errorMsg.includes('new row violates row-level security')) {
-                showError('Storage izinleri eksik. Lütfen RLS policy ayarlarını kontrol edin.');
-            } else if (errorMsg.includes('Payload too large')) {
-                showError('Dosya boyutu çok büyük. Lütfen daha küçük bir dosya seçin (max 50MB).');
-            } else {
-                showError(`Görsel eklenirken hata oluştu: ${errorMsg}`);
-            }
+            console.error('Error updating slide:', err);
+            showError(`Güncelleme hatası: ${err?.message || 'Bilinmeyen hata'}`);
+        } finally {
+            setSaving(false);
         }
-        setSaving(false);
     };
 
     // Delete slide
@@ -105,11 +175,7 @@ export default function SliderManagement() {
         if (!deleteConfirm) return;
 
         try {
-            // Delete from storage if it's a Supabase URL
-            if (deleteConfirm.image_url.includes('supabase')) {
-                const path = deleteConfirm.image_url.split('/').pop();
-                await deleteFile('hero-slides', path);
-            }
+            await deleteStorageFileFromUrl(deleteConfirm.image_url);
 
             const { error } = await supabase
                 .from('hero_slides')
@@ -117,18 +183,20 @@ export default function SliderManagement() {
                 .eq('id', deleteConfirm.id);
 
             if (error) throw error;
-            await fetchSlides();
+            setSlides(prev => prev.filter(s => s.id !== deleteConfirm.id));
             success('Görsel başarıyla silindi');
         } catch (err) {
             console.error('Error deleting slide:', err);
             showError('Görsel silinirken bir hata oluştu');
+            fetchSlides();
         } finally {
             setDeleteConfirm(null);
         }
     };
 
-    // Toggle active status
+    // Toggle active
     const handleToggleActive = async (slide) => {
+        setSlides(prev => prev.map(s => s.id === slide.id ? { ...s, is_active: !s.is_active } : s));
         try {
             const { error } = await supabase
                 .from('hero_slides')
@@ -136,9 +204,9 @@ export default function SliderManagement() {
                 .eq('id', slide.id);
 
             if (error) throw error;
-            await fetchSlides();
         } catch (err) {
             console.error('Error updating slide:', err);
+            setSlides(prev => prev.map(s => s.id === slide.id ? { ...s, is_active: slide.is_active } : s));
         }
     };
 
@@ -206,11 +274,18 @@ export default function SliderManagement() {
                             {/* Info */}
                             <div className="p-4">
                                 <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-white font-medium">{slide.alt_text || 'Görsel ' + (index + 1)}</p>
-                                        <p className="text-zinc-500 text-sm">Sıra: {index + 1}</p>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-white font-medium truncate">{slide.alt_text || 'Görsel ' + (index + 1)}</p>
+                                        <p className="text-zinc-500 text-xs truncate mt-1">{slide.image_url}</p>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 ml-2">
+                                        <button
+                                            onClick={() => openEditModal(slide)}
+                                            className="p-2 bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors"
+                                            title="Düzenle"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
                                         <button
                                             onClick={() => handleToggleActive(slide)}
                                             className={`p-2 rounded-lg transition-colors ${slide.is_active
@@ -239,148 +314,147 @@ export default function SliderManagement() {
             {showModal && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg">
-                        {/* Modal Header */}
                         <div className="flex items-center justify-between p-6 border-b border-zinc-800">
                             <h2 className="text-xl font-bold text-white">Yeni Görsel Ekle</h2>
                             <button
-                                onClick={() => {
-                                    setShowModal(false);
-                                    setNewSlide({ image_url: '', alt_text: '' });
-                                    setSelectedFile(null);
-                                    setPreviewUrl('');
-                                }}
+                                onClick={() => { setShowModal(false); setNewSlide({ image_url: '', alt_text: '' }); setSelectedFile(null); setPreviewUrl(''); }}
                                 className="p-2 text-zinc-400 hover:text-white transition-colors"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        {/* Modal Body */}
                         <div className="p-6 space-y-6">
-                            {/* Upload Type Toggle */}
                             <div className="flex bg-zinc-800 p-1 rounded-xl">
-                                <button
-                                    onClick={() => setUploadType('url')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all ${uploadType === 'url'
-                                        ? 'bg-[#d4af37] text-black'
-                                        : 'text-zinc-400 hover:text-white'
-                                        }`}
-                                >
-                                    <LinkIcon className="w-4 h-4" />
-                                    URL
+                                <button onClick={() => setUploadType('url')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all ${uploadType === 'url' ? 'bg-[#d4af37] text-black' : 'text-zinc-400 hover:text-white'}`}>
+                                    <LinkIcon className="w-4 h-4" /> URL
                                 </button>
-                                <button
-                                    onClick={() => setUploadType('file')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all ${uploadType === 'file'
-                                        ? 'bg-[#d4af37] text-black'
-                                        : 'text-zinc-400 hover:text-white'
-                                        }`}
-                                >
-                                    <Upload className="w-4 h-4" />
-                                    Dosya Yükle
+                                <button onClick={() => setUploadType('file')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all ${uploadType === 'file' ? 'bg-[#d4af37] text-black' : 'text-zinc-400 hover:text-white'}`}>
+                                    <Upload className="w-4 h-4" /> Dosya Yükle
                                 </button>
                             </div>
 
-                            {/* URL Input */}
                             {uploadType === 'url' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-zinc-400 mb-2">
-                                        Görsel URL'si
-                                    </label>
-                                    <input
-                                        type="url"
-                                        value={newSlide.image_url}
-                                        onChange={(e) => setNewSlide({ ...newSlide, image_url: e.target.value })}
-                                        placeholder="https://example.com/image.jpg"
-                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]"
-                                    />
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-zinc-400">Görsel URL'si</label>
+                                    <input type="url" value={newSlide.image_url} onChange={(e) => setNewSlide({ ...newSlide, image_url: e.target.value })} placeholder="https://..." className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]" />
+                                    {newSlide.image_url && (
+                                        <div className="mt-2 aspect-video rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700">
+                                            <img src={newSlide.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            {/* File Upload */}
                             {uploadType === 'file' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-zinc-400 mb-2">
-                                        Görsel Dosyası
+                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Görsel Dosyası</label>
+                                    <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" id="file-upload" />
+                                    <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-40 bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-xl cursor-pointer hover:border-[#d4af37] transition-colors">
+                                        {previewUrl ? <img src={previewUrl} alt="Preview" className="h-full w-full object-contain rounded-xl" /> : <><Upload className="w-10 h-10 text-zinc-500 mb-2" /><span className="text-zinc-400">Dosya seçmek için tıklayın</span><span className="text-zinc-500 text-sm">PNG, JPG, WEBP (max 2MB)</span></>}
                                     </label>
-                                    <div className="relative">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleFileSelect}
-                                            className="hidden"
-                                            id="file-upload"
-                                        />
-                                        <label
-                                            htmlFor="file-upload"
-                                            className="flex flex-col items-center justify-center w-full h-40 bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-xl cursor-pointer hover:border-[#d4af37] transition-colors"
-                                        >
-                                            {previewUrl ? (
-                                                <img src={previewUrl} alt="Preview" className="h-full w-full object-contain rounded-xl" />
-                                            ) : (
-                                                <>
-                                                    <Upload className="w-10 h-10 text-zinc-500 mb-2" />
-                                                    <span className="text-zinc-400">Dosya seçmek için tıklayın</span>
-                                                    <span className="text-zinc-500 text-sm">PNG, JPG, WEBP (max 5MB)</span>
-                                                </>
-                                            )}
-                                        </label>
-                                    </div>
                                 </div>
                             )}
 
-                            {/* Alt Text */}
                             <div>
-                                <label className="block text-sm font-medium text-zinc-400 mb-2">
-                                    Açıklama (Alt Text)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={newSlide.alt_text}
-                                    onChange={(e) => setNewSlide({ ...newSlide, alt_text: e.target.value })}
-                                    placeholder="Konya Kebap Evi"
-                                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]"
-                                />
+                                <label className="block text-sm font-medium text-zinc-400 mb-2">Açıklama (Alt Text)</label>
+                                <input type="text" value={newSlide.alt_text} onChange={(e) => setNewSlide({ ...newSlide, alt_text: e.target.value })} placeholder="Konya Kebap Evi" className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]" />
                             </div>
                         </div>
 
-                        {/* Modal Footer */}
                         <div className="flex items-center justify-end gap-3 p-6 border-t border-zinc-800">
-                            <button
-                                onClick={() => {
-                                    setShowModal(false);
-                                    setNewSlide({ image_url: '', alt_text: '' });
-                                    setSelectedFile(null);
-                                    setPreviewUrl('');
-                                }}
-                                className="px-6 py-2.5 bg-zinc-800 text-white font-medium rounded-xl hover:bg-zinc-700 transition-colors"
-                            >
-                                İptal
-                            </button>
-                            <button
-                                onClick={handleAddSlide}
-                                disabled={saving || (uploadType === 'url' && !newSlide.image_url) || (uploadType === 'file' && !selectedFile)}
-                                className="px-6 py-2.5 bg-[#d4af37] text-black font-bold rounded-xl hover:bg-[#e5c349] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                {saving ? (
-                                    <>
-                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                        </svg>
-                                        Ekleniyor...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="w-4 h-4" />
-                                        Kaydet
-                                    </>
-                                )}
+                            <button onClick={() => { setShowModal(false); setNewSlide({ image_url: '', alt_text: '' }); setSelectedFile(null); setPreviewUrl(''); }} className="px-6 py-2.5 bg-zinc-800 text-white font-medium rounded-xl hover:bg-zinc-700 transition-colors">İptal</button>
+                            <button onClick={handleAddSlide} disabled={saving || (uploadType === 'url' && !newSlide.image_url) || (uploadType === 'file' && !selectedFile)} className="px-6 py-2.5 bg-[#d4af37] text-black font-bold rounded-xl hover:bg-[#e5c349] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                {saving ? <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Ekleniyor...</> : <><Save className="w-4 h-4" /> Kaydet</>}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Edit Modal */}
+            {showEditModal && editingSlide && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg">
+                        <div className="flex items-center justify-between p-6 border-b border-zinc-800">
+                            <h2 className="text-xl font-bold text-white">Görseli Düzenle</h2>
+                            <button onClick={() => { setShowEditModal(false); setEditingSlide(null); }} className="p-2 text-zinc-400 hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Current image preview */}
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-400 mb-2">Mevcut Görsel</label>
+                                <div className="aspect-video rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700">
+                                    <img src={editPreviewUrl || editForm.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                </div>
+                            </div>
+
+                            {/* Upload Type Toggle */}
+                            <div className="flex bg-zinc-800 p-1 rounded-xl">
+                                <button onClick={() => setEditUploadType('url')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all ${editUploadType === 'url' ? 'bg-[#d4af37] text-black' : 'text-zinc-400 hover:text-white'}`}>
+                                    <LinkIcon className="w-4 h-4" /> URL
+                                </button>
+                                <button onClick={() => setEditUploadType('file')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all ${editUploadType === 'file' ? 'bg-[#d4af37] text-black' : 'text-zinc-400 hover:text-white'}`}>
+                                    <Upload className="w-4 h-4" /> Dosya Yükle
+                                </button>
+                            </div>
+
+                            {editUploadType === 'url' && (
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-zinc-400">Görsel URL'si</label>
+                                    <input
+                                        type="url"
+                                        value={editForm.image_url}
+                                        onChange={(e) => { setEditForm({ ...editForm, image_url: e.target.value }); setEditPreviewUrl(e.target.value); }}
+                                        placeholder="https://..."
+                                        className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]"
+                                    />
+                                </div>
+                            )}
+
+                            {editUploadType === 'file' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-400 mb-2">Yeni Görsel Dosyası</label>
+                                    <input type="file" accept="image/*" onChange={handleEditFileSelect} className="hidden" id="edit-file-upload" />
+                                    <label htmlFor="edit-file-upload" className="flex flex-col items-center justify-center w-full h-32 bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-xl cursor-pointer hover:border-[#d4af37] transition-colors">
+                                        {editSelectedFile ? <span className="text-[#d4af37] font-medium">{editSelectedFile.name}</span> : <><Upload className="w-8 h-8 text-zinc-500 mb-1" /><span className="text-zinc-400 text-sm">Dosya seçmek için tıklayın</span></>}
+                                    </label>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-400 mb-2">Açıklama (Alt Text)</label>
+                                <input type="text" value={editForm.alt_text} onChange={(e) => setEditForm({ ...editForm, alt_text: e.target.value })} placeholder="Konya Kebap Evi" className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-[#d4af37]" />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-3 p-6 border-t border-zinc-800">
+                            <button onClick={() => { setShowEditModal(false); setEditingSlide(null); }} className="px-6 py-2.5 bg-zinc-800 text-white font-medium rounded-xl hover:bg-zinc-700 transition-colors">İptal</button>
+                            <button onClick={handleEditSlide} disabled={saving} className="px-6 py-2.5 bg-[#d4af37] text-black font-bold rounded-xl hover:bg-[#e5c349] transition-colors disabled:opacity-50 flex items-center gap-2">
+                                {saving ? 'Kaydediliyor...' : <><Save className="w-4 h-4" /> Güncelle</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast Container */}
+            <ToastContainer />
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                onConfirm={confirmDelete}
+                title="Görseli Sil"
+                message={`"${deleteConfirm?.alt_text || 'Bu görseli'}" silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+                confirmText="Evet, Sil"
+                cancelText="İptal"
+                type="danger"
+            />
         </div>
     );
 }
