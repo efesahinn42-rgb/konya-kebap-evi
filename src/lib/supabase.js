@@ -25,7 +25,7 @@ export const handleAuthError = async (error) => {
         try {
             // Clear the invalid session
             await supabase.auth.signOut();
-            
+
             // Clear localStorage
             if (typeof window !== 'undefined') {
                 const keys = Object.keys(localStorage);
@@ -54,7 +54,7 @@ export const uploadFile = async (bucket, path, file) => {
     const { data, error } = await supabase.storage
         .from(bucket)
         .upload(path, file, {
-            cacheControl: '3600',
+            cacheControl: '31536000',
             upsert: true
         });
 
@@ -71,4 +71,22 @@ export const deleteFile = async (bucket, path) => {
 
     if (error) throw error;
     return true;
+};
+
+// Helper: Supabase Storage URL'den dosyayı sil
+// URL format: https://xxx.supabase.co/storage/v1/object/public/bucket-name/file-path
+export const deleteStorageFileFromUrl = async (url) => {
+    if (!url || !url.includes('supabase')) return; // External URL ise atla
+    try {
+        const parts = url.split('/storage/v1/object/public/');
+        if (parts.length !== 2) return;
+        const [bucket, ...pathParts] = parts[1].split('/');
+        const filePath = pathParts.join('/');
+        if (bucket && filePath) {
+            await deleteFile(bucket, filePath);
+        }
+    } catch (err) {
+        console.error('Storage dosyası silinirken hata:', err);
+        // Storage silme hatası ana işlemi engellemez
+    }
 };
