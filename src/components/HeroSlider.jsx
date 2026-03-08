@@ -91,7 +91,7 @@ export default function HeroSlider() {
                             alt={currentSlide.alt_text || 'Konya Kebap Evi'}
                             fill
                             priority={currentIndex === 0}
-                            className="object-cover object-center"
+                            className="object-contain object-bottom md:object-cover md:object-center"
                             sizes="100vw"
                             quality={75}
                         />
