@@ -274,27 +274,32 @@ export default function Navbar() {
         }
     };
 
+    // Check if we are on the homepage
+    const isHomePage = pathname === '/';
+    // Force scrolled state (top aligned, dark bg) if not on homepage, otherwise use scroll position
+    const shouldShowScrolled = !isHomePage || isScrolled;
+
     return (
         <>
             {/* Navbar - Hero içinde serbest konumda, scroll sonrası sticky */}
             <motion.header
-                className={`fixed z-50 transition-all duration-500 ${isScrolled
+                className={`fixed z-50 transition-all duration-500 ${shouldShowScrolled
                     ? 'top-0 left-0 right-0 bg-black/95 backdrop-blur-md shadow-lg'
-                    : 'top-[72%] left-0 right-0 -translate-y-1/2 bg-transparent'
+                    : 'top-0 lg:top-[72%] left-0 right-0 lg:-translate-y-1/2 bg-black/80 lg:bg-transparent'
                     }`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
                 style={{ willChange: 'transform, top' }}
             >
-                <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${isScrolled ? 'max-w-7xl' : 'w-full'}`}>
-                    <div className={`relative ${isScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-auto'}`}>
+                <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${shouldShowScrolled ? 'max-w-[1400px] overflow-hidden' : 'w-full'}`}>
+                    <div className={`relative ${shouldShowScrolled ? 'flex items-center justify-center h-16 lg:h-20' : 'h-16 lg:h-[200px]'}`}>
 
                         {/* Desktop Menu */}
                         <div className="hidden lg:block w-full">
-                            {isScrolled ? (
+                            {shouldShowScrolled ? (
                                 /* Scrolled: Unified Horizontal Menu */
-                                <nav className="flex flex-row items-center justify-center gap-6">
+                                <nav className="flex flex-row flex-nowrap items-center justify-evenly w-full">
                                     {menuItems.map((item, index) => {
                                         let isActive = false;
                                         if (item.isPage) {
@@ -304,13 +309,13 @@ export default function Navbar() {
                                             isActive = pathname === '/' && activeSection === hashName;
                                         }
 
-                                        const menuItemClass = `relative text-[16px] font-semibold tracking-[0.12em] transition-all duration-300 ${isActive ? 'text-[#d4af37]' : 'text-white/90 hover:text-[#d4af37]'} group py-2 px-4 whitespace-nowrap`;
+                                        const menuItemClass = `relative text-[11px] lg:text-[12px] xl:text-[13px] 2xl:text-[15px] font-semibold tracking-[0.05em] xl:tracking-[0.08em] 2xl:tracking-[0.1em] transition-all duration-300 ${isActive ? 'text-[#d4af37]' : 'text-white/90 hover:text-[#d4af37]'} group py-2 px-1 lg:px-2 xl:px-3 2xl:px-4 whitespace-nowrap`;
                                         const underlineClass = `absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-[#d4af37] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`;
                                         const IconComponent = item.icon;
                                         const content = (
                                             <span className="flex items-center gap-2">
                                                 {item.label}
-                                                <IconComponent className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#d4af37]" />
+                                                <IconComponent className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#d4af37] hidden xl:inline-block" />
                                                 <span className={underlineClass} />
                                             </span>
                                         );
@@ -394,7 +399,7 @@ export default function Navbar() {
                         {/* Mobile Menu Button - Kept same */}
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="lg:hidden absolute right-4 w-10 h-10 flex items-center justify-center text-white"
+                            className="lg:hidden absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white"
                             aria-label={mobileMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
                             aria-expanded={mobileMenuOpen}
                         >
@@ -421,7 +426,7 @@ export default function Navbar() {
 
                         {/* Menu Content */}
                         <div className="relative h-full flex flex-col items-center justify-center">
-                            <nav className="flex flex-col items-center gap-6">
+                            <nav className="flex flex-col items-center gap-5">
                                 {menuItems.map((item, index) => {
                                     // Mobile menu için aktif durum kontrolü
                                     let isActive = false;
@@ -456,9 +461,9 @@ export default function Navbar() {
                                                             handleHomePageClick(e);
                                                             setMobileMenuOpen(false);
                                                         }}
-                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
+                                                        className={`text-lg font-semibold tracking-[0.15em] transition-colors ${isActive
                                                             ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                            : 'text-white hover:text-[#d4af37]'
+                                                            : 'text-white/90 hover:text-[#d4af37]'
                                                             }`}
                                                     >
                                                         {item.label}
@@ -467,9 +472,9 @@ export default function Navbar() {
                                                     <Link
                                                         href={item.href}
                                                         onClick={() => setMobileMenuOpen(false)}
-                                                        className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
+                                                        className={`text-lg font-semibold tracking-[0.15em] transition-colors ${isActive
                                                             ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                            : 'text-white hover:text-[#d4af37]'
+                                                            : 'text-white/90 hover:text-[#d4af37]'
                                                             }`}
                                                     >
                                                         {item.label}
@@ -478,9 +483,9 @@ export default function Navbar() {
                                             ) : (
                                                 <button
                                                     onClick={() => handleLinkClick(item)}
-                                                    className={`text-xl font-bold tracking-[0.2em] transition-colors ${isActive
+                                                    className={`text-lg font-semibold tracking-[0.15em] transition-colors ${isActive
                                                         ? 'text-[#d4af37] underline decoration-2 underline-offset-4'
-                                                        : 'text-white hover:text-[#d4af37]'
+                                                        : 'text-white/90 hover:text-[#d4af37]'
                                                         }`}
                                                 >
                                                     {item.label}
