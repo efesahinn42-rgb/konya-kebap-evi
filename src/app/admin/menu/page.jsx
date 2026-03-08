@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase, uploadFile } from '@/lib/supabase';
+import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Save, X, Edit2, UtensilsCrossed, ChevronRight, ArrowLeft, Upload, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
@@ -90,22 +90,26 @@ export default function MenuManagement() {
                     .update(categoryForm)
                     .eq('id', editingCategory.id);
                 if (error) throw error;
+                setCategories(prev => prev.map(c => c.id === editingCategory.id ? { ...c, ...categoryForm } : c));
             } else {
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('menu_categories')
                     .insert({
                         ...categoryForm,
                         display_order: categories.length,
                         is_active: true
-                    });
+                    })
+                    .select()
+                    .single();
                 if (error) throw error;
+                if (data) setCategories(prev => [...prev, data]);
             }
-            await fetchCategories();
             setShowCategoryModal(false);
             success(editingCategory ? 'Kategori güncellendi' : 'Kategori eklendi');
         } catch (err) {
             console.error('Error saving category:', err);
             showError('Kategori kaydedilirken bir hata oluştu');
+            fetchCategories();
         }
         setSaving(false);
     };
@@ -128,26 +132,28 @@ export default function MenuManagement() {
                 setSelectedCategory(null);
                 setItems([]);
             }
-            await fetchCategories();
+            setCategories(prev => prev.filter(c => c.id !== deleteCategoryConfirm.id));
             success('Kategori ve içindeki tüm yemekler silindi');
         } catch (err) {
             console.error('Error deleting category:', err);
             showError('Kategori silinirken bir hata oluştu');
+            fetchCategories();
         } finally {
             setDeleteCategoryConfirm(null);
         }
     };
 
     const toggleCategoryActive = async (category) => {
+        setCategories(prev => prev.map(c => c.id === category.id ? { ...c, is_active: !c.is_active } : c));
         try {
             const { error } = await supabase
                 .from('menu_categories')
                 .update({ is_active: !category.is_active })
                 .eq('id', category.id);
             if (error) throw error;
-            await fetchCategories();
         } catch (err) {
             console.error('Error updating category:', err);
+            setCategories(prev => prev.map(c => c.id === category.id ? { ...c, is_active: category.is_active } : c));
         }
     };
 
@@ -197,10 +203,14 @@ export default function MenuManagement() {
         try {
             let imageUrl = itemForm.image_url;
 
-            // Upload file if selected
+            // Upload file if selected (with 30s timeout)
             if (uploadType === 'file' && selectedFile) {
                 const fileName = `menu-${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-                imageUrl = await uploadFile('menu-images', fileName, selectedFile);
+                const uploadPromise = uploadFile('menu-images', fileName, selectedFile);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Dosya yükleme zaman aşımına uğradı. Dosya boyutunu kontrol edin (max 2MB).')), 30000)
+                );
+                imageUrl = await Promise.race([uploadPromise, timeoutPromise]);
             }
 
             const itemData = {
@@ -236,11 +246,16 @@ export default function MenuManagement() {
                 showError('"menu-images" adında bir Storage Bucket bulunamadı. Lütfen Supabase panelinden bucket oluşturun.');
             } else if (msg.includes('row-level security') || msg.includes('violates new row')) {
                 showError('Yetki sorunu. Storage bucket için RLS policy ayarlarını kontrol edin.');
+            } else if (msg.includes('exceeded') || msg.includes('quota')) {
+                showError('Supabase depolama kotası aşıldı. Lütfen eski dosyaları silerek yer açın.');
+            } else if (msg.includes('zaman aşımı')) {
+                showError(msg);
             } else {
                 showError(`Yemek kaydedilirken hata oluştu: ${msg}`);
             }
+        } finally {
+            setSaving(false);
         }
-        setSaving(false);
     };
 
     const deleteItem = async (item) => {
@@ -251,31 +266,36 @@ export default function MenuManagement() {
         if (!deleteItemConfirm) return;
 
         try {
+            // Storage'dan görseli sil
+            await deleteStorageFileFromUrl(deleteItemConfirm.image_url);
+
             const { error } = await supabase
                 .from('menu_items')
                 .delete()
                 .eq('id', deleteItemConfirm.id);
             if (error) throw error;
-            await fetchItems(selectedCategory.id);
+            setItems(prev => prev.filter(i => i.id !== deleteItemConfirm.id));
             success('Yemek başarıyla silindi');
         } catch (err) {
             console.error('Error deleting item:', err);
             showError('Yemek silinirken bir hata oluştu');
+            fetchItems(selectedCategory.id);
         } finally {
             setDeleteItemConfirm(null);
         }
     };
 
     const toggleItemActive = async (item) => {
+        setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: !i.is_active } : i));
         try {
             const { error } = await supabase
                 .from('menu_items')
                 .update({ is_active: !item.is_active })
                 .eq('id', item.id);
             if (error) throw error;
-            await fetchItems(selectedCategory.id);
         } catch (err) {
             console.error('Error updating item:', err);
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: item.is_active } : i));
         }
     };
 
