@@ -82,8 +82,8 @@ export default function AdminLayout({ children }) {
                 }
 
                 if (!session) {
-                    window.location.href = '/admin/login';
-                    return;
+                    router.push('/admin/login');
+                    setLoading(false);
                 } else {
                     setUser(session.user);
 
