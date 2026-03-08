@@ -62,8 +62,7 @@ export default function AdminLayout({ children }) {
                 // Check if supabase is initialized
                 if (!supabase) {
                     console.error('Supabase not initialized');
-                    router.push('/admin/login');
-                    setLoading(false);
+                    window.location.href = '/admin/login';
                     return;
                 }
 
@@ -77,15 +76,14 @@ export default function AdminLayout({ children }) {
 
                     if (isRefreshTokenError) {
                         await handleAuthError(error);
-                        router.push('/admin/login');
-                        setLoading(false);
+                        window.location.href = '/admin/login';
                         return;
                     }
                 }
 
                 if (!session) {
-                    router.push('/admin/login');
-                    setLoading(false);
+                    window.location.href = '/admin/login';
+                    return;
                 } else {
                     setUser(session.user);
 
@@ -105,7 +103,7 @@ export default function AdminLayout({ children }) {
                 console.error('Auth check error:', err);
                 // On any error, clear session and redirect to login
                 await handleAuthError(err);
-                router.push('/admin/login');
+                window.location.href = '/admin/login';
                 setLoading(false);
             }
         };
@@ -116,7 +114,6 @@ export default function AdminLayout({ children }) {
             try {
                 if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
                     if (event === 'SIGNED_OUT') {
-                        router.push('/admin/login');
                         setUser(null);
                         setUserRole(null);
                         setUserName(null);
@@ -141,10 +138,7 @@ export default function AdminLayout({ children }) {
                 // Handle refresh token errors during state change
                 if (err?.message?.includes('Refresh Token') || err?.message?.includes('refresh_token')) {
                     await handleAuthError(err);
-                    router.push('/admin/login');
-                    setUser(null);
-                    setUserRole(null);
-                    setUserName(null);
+                    window.location.href = '/admin/login';
                 }
             }
         });
@@ -174,16 +168,7 @@ export default function AdminLayout({ children }) {
             setUserRole(null);
             setUserName(null);
 
-            // Sign out from Supabase
-            const { error } = await supabase.auth.signOut();
-
-            if (error) {
-                console.error('Logout error:', error);
-                // Handle refresh token errors during logout
-                await handleAuthError(error);
-            }
-
-            // Clear localStorage
+            // Clear localStorage immediately
             if (typeof window !== 'undefined') {
                 const keys = Object.keys(localStorage);
                 keys.forEach(key => {
@@ -193,18 +178,17 @@ export default function AdminLayout({ children }) {
                 });
             }
 
-            // Use window.location for more reliable redirect
-            // This ensures the page fully reloads and clears all state
+            // Sign out from Supabase in the background (don't wait)
+            supabase.auth.signOut().catch(err => {
+                console.error('Background signOut error:', err);
+            });
+
+            // Redirect immediately to login page
             window.location.href = '/admin/login';
         } catch (err) {
             console.error('Logout failed:', err);
-            // Handle auth errors
-            await handleAuthError(err);
             // Force redirect even on error
             window.location.href = '/admin/login';
-        } finally {
-            // This won't execute if window.location redirects, but good practice
-            setLoggingOut(false);
         }
     };
 
