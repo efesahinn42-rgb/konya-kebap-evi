@@ -1,47 +1,54 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Configuration
 APP_NAME="kebap-evi"
 PROJECT_DIR="/var/www/konya-kebap-evi"
 
-echo "🚀 Starting deployment for $APP_NAME..."
+echo "Starting deployment for $APP_NAME..."
 
-# 1. Update project from GitHub
-cd $PROJECT_DIR || exit 1
-echo "📥 Pulling latest changes from main..."
+cd "$PROJECT_DIR"
+echo "Pulling latest changes from main..."
 git pull origin main
 
-# 2. Install dependencies
-echo "📦 Installing dependencies..."
-npm ci --prefer-offline --no-audit
+echo "Installing dependencies..."
+if ! npm ci --prefer-offline --no-audit; then
+  echo "npm ci failed, falling back to npm install..."
+  npm install --prefer-offline --no-audit
+fi
 
-# 3. Build project
-echo "🏗️ Building project..."
+echo "Building project..."
 npm run build
 
-# 4. Prepare standalone directory
-echo "📂 Preparing standalone directory..."
-# Next.js standalone mode needs public and static files copied manualy
+if [ ! -f ".next/standalone/server.js" ]; then
+  echo "Build completed but .next/standalone/server.js is missing."
+  exit 1
+fi
+
+echo "Preparing standalone directory..."
 cp -r public .next/standalone/
 cp -r .next/static .next/standalone/.next/
-cp .env .next/standalone/ 2>/dev/null || echo "⚠️ .env file not found, skipping copy."
+cp .env .next/standalone/ 2>/dev/null || echo ".env file not found, skipping copy."
 
-# 5. Restart PM2 process
-echo "🔄 Restarting PM2 process..."
-pm2 restart $APP_NAME || pm2 start .next/standalone/server.js --name $APP_NAME
-
-# 6. Save PM2 state
+echo "Restarting PM2 process..."
+if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+  pm2 restart "$APP_NAME" --update-env
+else
+  pm2 start .next/standalone/server.js --name "$APP_NAME"
+fi
 pm2 save
 
-echo "✅ Deployment completed successfully!"
+echo "Running health check..."
+for _ in 1 2 3 4 5; do
+  STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || true)
+  if [ "$STATUS_CODE" = "200" ]; then
+    echo "Site is UP (HTTP 200)"
+    echo "Deployment completed successfully."
+    exit 0
+  fi
+  sleep 3
+done
 
-# 7. Health Check
-echo "🔍 Checking health status..."
-sleep 5
-STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
-if [ "$STATUS_CODE" -eq 200 ]; then
-    echo "✨ Site is UP (HTTP 200)"
-else
-    echo "❌ Site check failed with status: $STATUS_CODE"
-    exit 1
-fi
+echo "Site check failed with status: ${STATUS_CODE:-000}"
+exit 1
