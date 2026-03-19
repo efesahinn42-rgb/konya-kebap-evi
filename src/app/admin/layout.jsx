@@ -82,8 +82,8 @@ export default function AdminLayout({ children }) {
                 }
 
                 if (!session) {
-                    router.push('/admin/login');
-                    setLoading(false);
+                    window.location.href = '/admin/login';
+                    return; // Don't set loading to false so the user keeps seeing the spinner while navigating
                 } else {
                     setUser(session.user);
 
