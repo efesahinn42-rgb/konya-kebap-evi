@@ -7,6 +7,11 @@ export function RestaurantStructuredData() {
     name: 'Konya Kebap Evi',
     description: 'Asırlık lezzetleri modern sunumlarla buluşturan, Konya mutfağının en seçkin temsilcisi.',
     image: '/logo.png',
+    telephone: [
+      '0332 249 99 89',
+      '0530 771 73 15',
+      '0(551) 542 17 42'
+    ],
     servesCuisine: 'Turkish Cuisine',
     priceRange: '$$',
     address: {

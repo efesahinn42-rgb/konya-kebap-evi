@@ -83,10 +83,14 @@ export default function Footer() {
                                 Horozluhan OSB, İstikamet Cd. No:3<br />
                                 42120 Selçuklu/Konya
                             </p>
-                            <p className="text-xs sm:text-[13px] leading-[1.7] text-zinc-400">
+                            <div className="text-xs sm:text-[13px] leading-[1.7] text-zinc-400">
                                 <strong className="text-[#d4af37] font-bold block mb-1 uppercase tracking-wider text-[11px] sm:text-xs">Telefon:</strong>
-                                <a href="tel:4448742" className="hover:text-[#d4af37] transition-colors">444 87 42</a>
-                            </p>
+                                <div className="flex flex-col gap-1">
+                                    <a href="tel:03322499989" className="hover:text-[#d4af37] transition-colors">0332 249 99 89</a>
+                                    <a href="tel:05307717315" className="hover:text-[#d4af37] transition-colors">0530 771 73 15</a>
+                                    <a href="tel:05515421742" className="hover:text-[#d4af37] transition-colors">0 (551) 542 17 42</a>
+                                </div>
+                            </div>
                             <p className="text-xs sm:text-[13px] leading-[1.7] text-zinc-400">
                                 <strong className="text-[#d4af37] font-bold block mb-1 uppercase tracking-wider text-[11px] sm:text-xs">E-posta:</strong>
                                 <a href="mailto:info@konyakebabevi.com" className="hover:text-[#d4af37] transition-colors">info@konyakebabevi.com</a>
