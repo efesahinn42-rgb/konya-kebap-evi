@@ -82,8 +82,8 @@ export default function AdminLayout({ children }) {
                 }
 
                 if (!session) {
-                    window.location.href = '/admin/login';
-                    return; // Don't set loading to false so the user keeps seeing the spinner while navigating
+                    router.replace('/admin/login');
+                    setLoading(false);
                 } else {
                     setUser(session.user);
 
@@ -211,7 +211,14 @@ export default function AdminLayout({ children }) {
 
     // Not authenticated
     if (!user) {
-        return null;
+        return (
+            <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-zinc-400">Yönlendiriliyor...</p>
+                </div>
+            </div>
+        );
     }
 
     // Menüyü role göre filtrele
