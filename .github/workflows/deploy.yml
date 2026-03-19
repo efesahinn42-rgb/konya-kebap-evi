@@ -1,7 +1,9 @@
 name: Deploy to Cenuta Server
 
 on:
-  # Temporarily disabled automatic deploy from push.
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
