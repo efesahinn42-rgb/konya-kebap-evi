@@ -231,7 +231,7 @@ export async function sendSMS(phone, message) {
 export async function sendCustomerSMS(phone, reservationData) {
     const { name, date, time, guests } = reservationData;
 
-    const message = `Sayın ${name}, ${date} tarihinde saat ${time}'de ${guests} kişilik rezervasyonunuz alınmıştır. Konya Kebap Evi - 0332 249 99 89`;
+    const message = `Sayın ${name}, ${date} tarihinde saat ${time}'de ${guests} kişilik rezervasyonunuz alınmıştır. Konya Kebap Evi - 0 (551) 542 17 42`;
 
     return sendSMS(phone, message);
 }

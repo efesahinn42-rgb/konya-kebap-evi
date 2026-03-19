@@ -323,13 +323,13 @@ export default function ReservationSection() {
 
                                         {/* Call Button */}
                                         <motion.a
-                                            href="tel:03322499989"
+                                            href="tel:05515421742"
                                             className="sm:w-auto py-4 sm:py-5 px-6 sm:px-8 bg-zinc-800 hover:bg-zinc-700 text-white font-black text-sm sm:text-base tracking-wider rounded-xl transition-all border border-white/10 flex items-center justify-center gap-3"
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                         >
                                             <Phone className="w-5 h-5 text-[#d4af37]" />
-                                            <span>0332 249 99 89</span>
+                                            <span>0 (551) 542 17 42</span>
                                         </motion.a>
                                     </div>
                                 </form>
