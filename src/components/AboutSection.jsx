@@ -123,7 +123,7 @@ export default function AboutSection() {
                             className="mb-8 flex justify-center"
                         >
                             <Image
-                                src="/logo.png"
+                                src="/logo2.png"
                                 alt="Konya Kebap Evi Logo"
                                 width={300}
                                 height={300}
