@@ -12,7 +12,6 @@ const statsData = [
     { value: '5.0', label: 'Tripadvisor', icon: Star },
     { value: '132K', label: 'Takipçi', icon: TrendingUp },
     { value: '98%', label: 'Memnuniyet', icon: Heart },
-    { value: '20+', label: 'Yıl Tecrübe', icon: Clock },
     { value: '50+', label: 'Tarif', icon: Utensils },
     { value: '1M+', label: 'Mutlu Misafir', icon: Users },
     { value: '3', label: 'Şube', icon: MapPin },
