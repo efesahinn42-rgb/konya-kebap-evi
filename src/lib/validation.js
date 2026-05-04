@@ -15,17 +15,23 @@ export const VALID_TIMES = [
     '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'
 ];
 
-// Bugünün tarihini YYYY-MM-DD formatında al
+// Bugünün tarihini YYYY-MM-DD formatında al (Yerel saat)
 export function getTodayDate() {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 // Maksimum rezervasyon tarihi (30 gün sonra)
 export function getMaxDate() {
     const maxDate = new Date();
     maxDate.setDate(maxDate.getDate() + 30);
-    return maxDate.toISOString().split('T')[0];
+    const yyyy = maxDate.getFullYear();
+    const mm = String(maxDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(maxDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 // Tarihin geçerli olup olmadığını kontrol et

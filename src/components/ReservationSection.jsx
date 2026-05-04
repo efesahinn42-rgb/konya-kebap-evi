@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarDays, Clock, Users, Phone, User, CheckCircle, Utensils } from 'lucide-react';
 import { getTodayDate, getMaxDate, VALID_TIMES, formatPhoneDisplay } from '@/lib/validation';
@@ -18,9 +18,14 @@ export default function ReservationSection() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Dinamik tarih limitleri
-    const minDate = useMemo(() => getTodayDate(), []);
-    const maxDate = useMemo(() => getMaxDate(), []);
+    // Dinamik tarih limitleri (İstemci tarafında güncellenir)
+    const [minDate, setMinDate] = useState('');
+    const [maxDate, setMaxDate] = useState('');
+
+    useEffect(() => {
+        setMinDate(getTodayDate());
+        setMaxDate(getMaxDate());
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
