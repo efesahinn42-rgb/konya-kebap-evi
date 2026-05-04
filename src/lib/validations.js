@@ -27,6 +27,54 @@ export function validateURL(url) {
     }
 }
 
+// Image URL accessibility validation (client-side)
+export async function validateImageUrlReachable(url, timeoutMs = 10000) {
+    const normalizedUrl = (url || '').trim();
+
+    if (!normalizedUrl) {
+        return { isValid: false, reason: 'empty' };
+    }
+
+    if (!validateURL(normalizedUrl)) {
+        return { isValid: false, reason: 'invalid-url' };
+    }
+
+    // Server-side rendering safety
+    if (typeof window === 'undefined') {
+        return { isValid: true, reason: 'server-skip' };
+    }
+
+    return new Promise((resolve) => {
+        const img = new window.Image();
+        let settled = false;
+        const cacheBustedUrl = `${normalizedUrl}${normalizedUrl.includes('?') ? '&' : '?'}_validate=${Date.now()}`;
+
+        const finish = (isValid, reason) => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeoutId);
+            img.onload = null;
+            img.onerror = null;
+            resolve({ isValid, reason });
+        };
+
+        const timeoutId = window.setTimeout(() => {
+            finish(false, 'timeout');
+        }, timeoutMs);
+
+        img.onload = () => finish(true, 'ok');
+        img.onerror = () => finish(false, 'load-error');
+        img.src = cacheBustedUrl;
+    });
+}
+
+export function getImageValidationErrorMessage(reason) {
+    if (reason === 'empty') return 'Lütfen bir görsel URL’si girin.';
+    if (reason === 'invalid-url') return 'Geçerli bir URL girin (http/https).';
+    if (reason === 'timeout') return 'Görsel URL’sine erişilemedi (zaman aşımı).';
+    return 'Bu görsel URL’si geçerli değil veya dosya erişilemiyor (HTTP 200 değil).';
+}
+
 // YouTube URL validation
 export function validateYouTubeURL(url) {
     const patterns = [

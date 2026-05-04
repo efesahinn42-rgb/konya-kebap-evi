@@ -4,6 +4,7 @@ import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Image as ImageIcon, Save, X, Upload, Link as LinkIcon, Edit2 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
+import { validateImageUrlReachable, getImageValidationErrorMessage } from '@/lib/validations';
 
 export default function SliderManagement() {
     const { success, error: showError, ToastContainer } = useToast();
@@ -63,7 +64,7 @@ export default function SliderManagement() {
     const handleAddSlide = async () => {
         setSaving(true);
         try {
-            let imageUrl = newSlide.image_url;
+            let imageUrl = (newSlide.image_url || '').trim();
 
             if (uploadType === 'file' && selectedFile) {
                 const fileName = `slide-${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
@@ -78,6 +79,15 @@ export default function SliderManagement() {
                 showError('Lütfen bir görsel URL\'si girin veya dosya yükleyin');
                 setSaving(false);
                 return;
+            }
+
+            if (uploadType === 'url') {
+                const validation = await validateImageUrlReachable(imageUrl);
+                if (!validation.isValid) {
+                    showError(getImageValidationErrorMessage(validation.reason));
+                    setSaving(false);
+                    return;
+                }
             }
 
             const { data, error } = await supabase
@@ -127,7 +137,7 @@ export default function SliderManagement() {
     const handleEditSlide = async () => {
         setSaving(true);
         try {
-            let imageUrl = editForm.image_url;
+            let imageUrl = (editForm.image_url || '').trim();
 
             if (editUploadType === 'file' && editSelectedFile) {
                 const fileName = `slide-${Date.now()}-${editSelectedFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
@@ -145,6 +155,15 @@ export default function SliderManagement() {
                 showError('Lütfen bir görsel URL\'si girin veya dosya yükleyin');
                 setSaving(false);
                 return;
+            }
+
+            if (editUploadType === 'url') {
+                const validation = await validateImageUrlReachable(imageUrl);
+                if (!validation.isValid) {
+                    showError(getImageValidationErrorMessage(validation.reason));
+                    setSaving(false);
+                    return;
+                }
             }
 
             const { error } = await supabase

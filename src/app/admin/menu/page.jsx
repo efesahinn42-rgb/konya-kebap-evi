@@ -4,7 +4,7 @@ import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Save, X, Edit2, UtensilsCrossed, ChevronRight, ArrowLeft, Upload, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
-import { validatePrice } from '@/lib/validations';
+import { validatePrice, validateImageUrlReachable, getImageValidationErrorMessage } from '@/lib/validations';
 
 const emojiOptions = ['🍜', '🫓', '🍖', '🍰', '🥤', '🍽️', '🥗', '🍕', '🍝', '🥘', '🍳', '☕'];
 
@@ -201,7 +201,7 @@ export default function MenuManagement() {
 
         setSaving(true);
         try {
-            let imageUrl = itemForm.image_url;
+            let imageUrl = (itemForm.image_url || '').trim();
 
             // Upload file if selected (with 30s timeout)
             if (uploadType === 'file' && selectedFile) {
@@ -211,6 +211,16 @@ export default function MenuManagement() {
                     setTimeout(() => reject(new Error('Dosya yükleme zaman aşımına uğradı. Dosya boyutunu kontrol edin (max 2MB).')), 30000)
                 );
                 imageUrl = await Promise.race([uploadPromise, timeoutPromise]);
+            }
+
+            // URL mode: prevent broken image links from being saved
+            if (uploadType === 'url' && imageUrl) {
+                const validation = await validateImageUrlReachable(imageUrl);
+                if (!validation.isValid) {
+                    showError(getImageValidationErrorMessage(validation.reason));
+                    setSaving(false);
+                    return;
+                }
             }
 
             const itemData = {

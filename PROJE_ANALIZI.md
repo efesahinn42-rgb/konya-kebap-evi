@@ -9,7 +9,7 @@
 **Veritabanı:** Supabase (PostgreSQL)  
 **Stil:** Tailwind CSS 3.4.19  
 **Durum:** Aktif Geliştirme
-
+Sunucu PORT 5522 SSH ile otomatik bağlanma
 ---
 
 ## 🏗️ PROJE YAPISI

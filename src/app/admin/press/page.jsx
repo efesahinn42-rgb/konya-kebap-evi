@@ -4,7 +4,7 @@ import { supabase, uploadFile, deleteStorageFileFromUrl } from '@/lib/supabase';
 import { Plus, Trash2, Newspaper, Save, X, Edit2, Upload, Link as LinkIcon, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import ConfirmDialog from '@/components/admin/ConfirmDialog';
-import { validateDate } from '@/lib/validations';
+import { validateDate, validateImageUrlReachable, getImageValidationErrorMessage } from '@/lib/validations';
 
 export default function PressManagement() {
     const { success, error: showError, ToastContainer } = useToast();
@@ -91,7 +91,7 @@ export default function PressManagement() {
 
         setSaving(true);
         try {
-            let imageUrl = formData.image_url;
+            let imageUrl = (formData.image_url || '').trim();
 
             if (uploadType === 'file' && selectedFile) {
                 const fileName = `press-${Date.now()}-${selectedFile.name}`;
@@ -99,9 +99,18 @@ export default function PressManagement() {
             }
 
             if (!imageUrl) {
-                alert('Lütfen bir görsel ekleyin');
+                showError('Lütfen bir görsel ekleyin');
                 setSaving(false);
                 return;
+            }
+
+            if (uploadType === 'url') {
+                const validation = await validateImageUrlReachable(imageUrl);
+                if (!validation.isValid) {
+                    showError(getImageValidationErrorMessage(validation.reason));
+                    setSaving(false);
+                    return;
+                }
             }
 
             const saveData = { ...formData, image_url: imageUrl };

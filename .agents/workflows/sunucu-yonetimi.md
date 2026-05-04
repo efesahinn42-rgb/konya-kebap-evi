@@ -47,8 +47,23 @@ PM2 loglarını, Nginx durumunu ve sistem kaynaklarını incelemek için:
 ssh -p 5522 ubuntu@89.252.153.114 "source ~/.nvm/nvm.sh && pm2 logs kebap-evi --lines 50 --nostream 2>&1 && echo '---' && sudo systemctl status nginx --no-pager && echo '---' && uptime && free -h"
 ```
 
+## 🖼️ Günlük Görsel Hata Kontrolü (`/_next/image` 400/504)
+Görsel kaynaklı hataları günlük kontrol etmek için:
+
+// turbo
+```bash
+ssh -p 5522 ubuntu@89.252.153.114 "cd /var/www/konya-kebap-evi && source ~/.nvm/nvm.sh && bash scripts/image-health-check.sh 3000"
+```
+
+Opsiyonel cron (her gün 09:00 UTC):
+
+```bash
+(crontab -l 2>/dev/null; echo "0 9 * * * cd /var/www/konya-kebap-evi && bash scripts/image-health-check.sh 3000 >> /var/log/kebap-image-health.log 2>&1") | crontab -
+```
+
 ## ⚠️ Önemli Notlar
 1. Proje **standalone modda** çalışıyor. Build sonrası `static`, `public` ve `.env` dosyaları standalone dizinine kopyalanmalıdır — `deploy.sh` bunu otomatik yapar.
 2. Nginx ayarları `/etc/nginx/sites-available/default` konumundadır. SSL, Gzip ve Yönlendirmeler aktiftir.
 3. Node versiyonunu yönetmek için bash içerisinde her zaman `source ~/.nvm/nvm.sh` komutu kullanılmalıdır, aksi takdirde PM2 veya npm bulunamayabilir.
 4. `sharp@0.33.5` kuruludur (görsel optimizasyonu için). Sunucu CPU'su eski mimari olduğu için v0.34+ çalışmaz.
+5. PM2 süreci `npm start` yerine standalone entrypoint (`.next/standalone/server.js`) ile çalıştırılmalıdır; `deploy.sh` bunu otomatik düzeltir.
